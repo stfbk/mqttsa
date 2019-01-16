@@ -1,4 +1,4 @@
 paho-mqtt
 fpdf
-pyshark
+pyshark==0.3.8
 tshark
