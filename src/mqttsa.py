@@ -174,7 +174,7 @@ if __name__== "__main__":
     # VARIABLES
 
     # authentication may be required
-    no_authentication = False
+    no_authentication = True
     # information disclosure
     information_disclosure = False
     # topics available
@@ -354,14 +354,16 @@ if __name__== "__main__":
 
     # check if there are writable topics and in case perform data tampering attack
     # in case no writable topics are found, try with a default one
-    if len(topics_writable)!=0:
-        mal_data_topic = next(iter(topics_writable))
-    elif len(sys_topics_writable)!=0:
-        mal_data_topic = next(iter(sys_topics_writable))
-    else:
-        mal_data_topic = "Topic1"
     if malformed_data:
+        if len(topics_writable)!=0:
+            mal_data_topic = next(iter(topics_writable))
+        elif len(sys_topics_writable)!=0:
+            mal_data_topic = next(iter(sys_topics_writable))
+        else:
+            mal_data_topic = "Topic1"
         mal_data = md.malformed_data(broker_ip, port, mal_data_topic, tls_cert, client_cert)
+    else:
+        mal_data = None
 
     # check if number of connections for a dos attack are specified 
     # and in case perform the attack
