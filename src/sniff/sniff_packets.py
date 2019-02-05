@@ -1,4 +1,5 @@
 import pyshark
+import concurrent.futures
 
 # custom class to store a username and the related password (if found)
 class Credentials:
@@ -140,11 +141,15 @@ def sniffing_attack(interface, listening_time):
         # when an MQTT packet is intercepted call the function get_info
         # here we define also the timeout of the attack
         cap.apply_on_packets(get_info, timeout=float(listening_time))
-        cap.sniff()
+        #cap.sniff()
+    except concurrent.futures.TimeoutError:
+		print "Sniffing terminated: "+str(num_packets)+" packets intercepted on "+interface
+		pass
     except Exception as e:
-        # if an error occurs we print it and we return two empty arrays
-        print "Sniffing terminated with error: " + str(e)
-        return credentials, clientids
+		template = "An exception of type {0} occurred during Sniffing. Arguments:\n{1!r}"
+		message = template.format(type(e).__name__, e.args)
+		print message
+		return credentials, clientids
     return credentials, clientids
 
 # used for running only this attack for testing purposes
@@ -154,6 +159,14 @@ if __name__=="__main__":
     cap = pyshark.LiveCapture(interface=inf, display_filter='mqtt')
     try:
         cap.apply_on_packets(print_info, timeout=float(time))
-        cap.sniff()
+        #cap.sniff()
+    except concurrent.futures.TimeoutError:
+		print "\nSniffing terminated: "+str(num_packets)+" packets intercepted on "+inf
+		for i in range(len(credentials)):
+		    print("Credential"+"["+str(i)+"]: "+credentials[i].username+" : "+credentials[i].password)
+		for i in range(len(clientids)):
+		    print("ClientID"+"["+str(i)+"]: "+clientids[i])
     except Exception as e:
-        print "Sniffing terminated: " + str(e)
+        template = "An exception of type {0} occurred during Sniffing. Arguments:\n{1!r}"
+        message = template.format(type(e).__name__, e.args)
+        print message
