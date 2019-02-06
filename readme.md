@@ -1,7 +1,7 @@
 # MQTTSA
 The goal of MQTTSA is to automatically detect misconfigurations in MQTT brokers, to provide a report of the potential vulnerabilities, and a list of (high level) measures to deploy for mitigation.  
 Run the tool with the following command specifying the IP address of the broker:  
-`python mqtt.py {IP_OF_THE_BROKER}`  
+`sudo python mqtt.py {IP_OF_THE_BROKER}`  
 The following arguments are available to set specific parameters of the execution or to enable some attacks:  
 
 ```
@@ -25,3 +25,7 @@ The attacks implemented are the following:
 - Information Disclosure
 - Malformed Data
 - Denial of Service
+
+# Requirements
+
+MQTTSA requires (e.g. via APT) the following packets: `python-pip libxml2-dev libxslt-dev python-dev tshark`; run `sudo make` to install additional requirements with `PIP` (from `requirements.txt`).
