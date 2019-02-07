@@ -4,7 +4,6 @@ import dos.broker_dos as dos
 import pdf_wrapper.pdf_wrapper as pdfw
 import pdf_wrapper.write_results as write_results
 import sniff.sniff_packets as sniff
-import time
 import os
 import optparse
 import ssl
@@ -28,32 +27,31 @@ def on_connect(client, userdata, flags, rc):
 
     # if return code is 0, connected!
     if rc==0:
-        print 'Connected! Returned code: ' +str(rc)
+        print ('Connected! Returned code: ' +str(rc))
         # the state variable is used to trace how we connected to the broker
         # state = 0 means no username and passwords
         # state = 1 means username but no password
         # state = 2 means username and password
         if state==0:
-                if brute_force_dec:
-                        # User asked bruteforce, but not needed
-                        brute_force_cannot_be_executed = True
-                print 'Brute force not required!'
-                brute_force_dec = False
-                # authentication is not required
-                no_authentication = True
-                no_pass = True
+            if brute_force_dec:
+                # User asked bruteforce, but not needed
+                brute_force_cannot_be_executed = True
+            print ('Brute force not required!')
+            brute_force_dec = False
+            # authentication is not required
+            no_authentication = True
+            no_pass = True
         elif state==1:
-                print 'No password required!'
-                no_pass = True
+            print ('No password required!')
+            no_pass = True
         elif state ==2:
-                print 'Connected successfully using password found with brute force'
+            print ('Connected successfully using password found with brute force')
     elif (rc!=4):
         brute_force_dec = False
         # we create a special flag to have an appropriate section in the final report
         brute_force_cannot_be_executed = True
         # authentication may be required
-        print 'Not connected, Returned code: '+str(rc)
-
+        print ('Not connected, Returned code: '+str(rc))
 
 # function called after the reception of a message
 def on_message(client, userdata, message):
@@ -62,16 +60,22 @@ def on_message(client, userdata, message):
     global sys_topics_readable
     global sys_topics_writable
     global information_disclosure
+    global connected_clients
+    global brocker_info
 
     # print message and topic
-    try:
-        print 'message received '+ message.payload.decode("utf-8")
-    except:
-        print 'message received but cannot decode in utf-8: ' + str(message.payload)
+    #try:
+        #print ('message received '+ message.payload.decode("utf-8"))
+    #except:
+        #print ('message received but cannot decode in utf-8: ' + str(message.payload))
 
-    # If we can read, add in readable set 
+    # If we can read, add in readable set
     if '$SYS' in str(message.topic):
         sys_topics_readable.add(str(message.topic.replace('#','')))
+        if(connected_clients == None and str(message.topic) == '$SYS/broker/clients/connected'):
+            connected_clients = message.payload
+        if(brocker_info == None and str(message.topic) == '$SYS/broker/version'):
+            brocker_info = message.payload
     else:
         # add topic in the set of topic
         topics_readable.add(str(message.topic.replace('#','')))
@@ -96,6 +100,8 @@ if __name__== "__main__":
     global sys_topics_writable
     global information_disclosure
     global brute_force_cannot_be_executed
+    global connected_clients
+    global brocker_info
 
     # PARSING INPUT
     parser = utils.create_parser()
@@ -103,8 +109,8 @@ if __name__== "__main__":
 
     # if no broker_ip is specified: error!
     if len(sys.argv)<2:
-        print '[!] No broker IP specified'
-        print parser.print_help()
+        print ('[!] No broker IP specified')
+        print (parser.print_help())
         quit(42)
 
     # getting all values parsing the arguments
@@ -116,53 +122,54 @@ if __name__== "__main__":
     text_message        = options.text_message
     threads             = options.threads
     interface           = options.interface
-    port		= options.port
+    port                = options.port
     malformed_data      = options.malformed_data
     non_intrusive       = options.non_intrusive
     tls_cert            = options.tls_cert
     client_cert         = options.client_cert
     brute_force_dec     = True
 
+    connected_clients = None
+    brocker_info = None
 
     # Printing errors or setting default values
-    print ''
+    print ('')
     if listening_time == None or listening_time < 1:
-        print '[!] listening_time wrong or not specified, setting it to 60'
+        print ('[!] listening_time wrong or not specified, setting it to 60')
         listening_time = 60
 
     if dos_connections == None or dos_connections < 1:
-        print '[!] dos_connections wrong or not specified, no DoS attack'
+        print ('[!] dos_connections wrong or not specified, no DoS attack')
         dos_connections = None
 
     if username == None or wordlist_path == None:
-        print '[!] username or wordlist_path not specified, no brute force'
+        print ('[!] username or wordlist_path not specified, no brute force')
         brute_force_dec = False
     elif not os.path.exists(wordlist_path):
-        print '[!] path for the wordlist not found!'
+        print ('[!] path for the wordlist not found!')
         quit(42)
     elif threads== None or threads<1:
-        print '[!] threads wrong or not specified, setting it to 10'
+        print ('[!] threads wrong or not specified, setting it to 10')
         threads=10
 
     if text_message == None or len(text_message)<1:
-        print '[!] text_message not specified, setting it to "testtesttest"'
+        print ('[!] text_message not specified, setting it to "testtesttest"')
         text_message='testtesttest'
 
     if interface == None:
-        print '[!] interface not specified, no sniffing attack'
+        print ('[!] interface not specified, no sniffing attack')
 
     if port == None:
-	print '[!] port not specified, setting it to 1883'
-	port = 1883
+        print ('[!] port not specified, setting it to 1883')
+        port = 1883
 
     if malformed_data == None:
-	print '[!] --md flag not specified, no malformed data attack'
+        print ('[!] --md flag not specified, no malformed data attack')
 
     if tls_cert == None:
-        print '[!] no path for the certificate specified, not connecting using tls'
+        print ('[!] no path for the certificate specified, not connecting using tls')
 
-
-    print '\n\n[*] TARGET:           	     ' + sys.argv[1]
+    print '\n\n[*] TARGET:                  ' + sys.argv[1]
     print '[*] LISTENING TIME:          ' + str(listening_time)
     print '[*] DOING DOS:               ' + str(not dos_connections == None)
     print '[*] DOING SNIFFING ATTACK:   ' + str(not interface == None)
@@ -206,19 +213,18 @@ if __name__== "__main__":
 
     # if the path to a CA certificate is available, we try to connect over TLS
     if tls_cert != None:
-	client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
-                            tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-	client.tls_insecure_set(True)
+        client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+        client.tls_insecure_set(True)
 
     # connect to the specified broker
     client.connect(broker_ip,port,60)
     client.loop_start()
-    print 'Trying to connect...\n'
+    print ('Trying to connect...\n')
     sleep(5)
 
     # in case connection worked
     if (no_authentication):
-	# Subscribe to all
+        # Subscribe to all
         client.subscribe('#')
 
         # Subscribe to SYS topics
@@ -231,16 +237,18 @@ if __name__== "__main__":
 
         # if the non intrusive flag was set, we just listen for messages but we don't try to write onto them
         if non_intrusive != True:
-            for i in topics_readable.union(sys_topics_readable):
+            all_topics = topics_readable.union(sys_topics_readable)
+            print('Trying to publish in '+str(len(all_topics))+' topics.\nExtimated time: '+str(len(all_topics))+' seconds\n')
+            for i in all_topics:
                 # publish test message
                 if '#' in i:
                     i = i.replace('#','')
-                print 'trying to write in: '+str(i)
+                print ('trying to write in: '+str(i))
                 client.publish(i,text_message)
                 sleep(1)
 
         client.loop_stop()
-	client.disconnect()
+        client.disconnect()
 
     # in case we were not able to connect first we try to use credentials intercepted with the 
     # sniffing attack (if specified), otherwise we will proceed with the other attacks
@@ -248,14 +256,13 @@ if __name__== "__main__":
         for c in credentials:
             u = c.username
             p = c.password
-            print 'trying to connect with username: ' + u + ' and password: ' + p
+            print ('trying to connect with username: ' + u + ' and password: ' + p)
             client.username_pw_set(u, p)
 
             # if the path to a CA certificate is available, we try to connect over TLS
             if tls_cert != None:
-		client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
-				tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-		client.tls_insecure_set(True)
+                client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                client.tls_insecure_set(True)
 
             client.connect(broker_ip,port)
             client.loop_start()
@@ -273,10 +280,9 @@ if __name__== "__main__":
         client.username_pw_set(username,password=None)
 
         # if the path to a CA certificate is available, we try to connect over TLS
-	if tls_cert != None:
-		client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
-				tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-		client.tls_insecure_set(True)
+        if tls_cert != None:
+            client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+            client.tls_insecure_set(True)
 
         # connect to the specified broker
         client.connect(broker_ip,port)
@@ -284,73 +290,73 @@ if __name__== "__main__":
         sleep(5)
         client.loop_stop()
         if not no_pass:
-                print '\nPerforming brute force...\n'
-                client.loop_stop()
-		client.disconnect()
-                # perform brute force
-                bruteforce_results = bruteforce.brute_force(broker_ip,port,username,wordlist_path, tls_cert, client_cert)
+            print ('\nPerforming brute force...\n')
+            client.loop_stop()
+            client.disconnect()
+            # perform brute force
+            bruteforce_results = bruteforce.brute_force(broker_ip,port,username,wordlist_path, tls_cert, client_cert)
+                
+            if bruteforce_results[0]:
+                # state 2 -> username, password
+                state = 2
 
-		if bruteforce_results[0]:
-                        # state 2 -> username, password
-                        state = 2
-
-                        client = mqtt.Client()
-                        client.on_connect = on_connect
-                        client.on_message = on_message
-                        password = bruteforce_results[1]
-                        client.username_pw_set(username,password)
-
-                        # if the path to a CA certificate is available, we try to connect over TLS
-			if tls_cert != None:
-				client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
-						tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-				client.tls_insecure_set(True)
-
-                        # connect to the specified broker
-                        client.connect(broker_ip,port)
-                        client.loop_start()
-                        sleep(3)
-                        client.loop_stop()
-                else:
-                        print '[!] Brute force was not successful\n'
-                        client.loop_stop()
-	client.disconnect()
-
-        if not ((not bruteforce_results[0]) and state==2):
-		client = mqtt.Client()
+                client = mqtt.Client()
                 client.on_connect = on_connect
                 client.on_message = on_message
-                if state == 1:
-                        client.username_pw_set(username,password=None)
-                elif state == 2:
-                        client.username_pw_set(username,password)
+                password = bruteforce_results[1]
+                client.username_pw_set(username,password)
 
                 # if the path to a CA certificate is available, we try to connect over TLS
-		if tls_cert != None:
-			client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
-					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-			client.tls_insecure_set(True)
+                if tls_cert != None:
+                    client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                    client.tls_insecure_set(True)
+
+                # connect to the specified broker
                 client.connect(broker_ip,port)
                 client.loop_start()
-                # Subscribe to all
-                client.subscribe('#')
-                # Subscribe to SYS topics
-                client.subscribe('$SYS/#')
-                # client will start receiving some messages
-                sleep(listening_time)
+                sleep(3)
+                client.loop_stop()
+            else:
+                print '[!] Brute force was not successful\n'
+                client.loop_stop()
+        client.disconnect()
 
-                # iterate in the available topics
-                for i in topics_readable.union(sys_topics_readable):
-                    # publish test message
-                    if '#' in i:
-                        i = i.replace('#','')
-                    print 'trying to write in: '+str(i)
-                    client.publish(i,text_message)
-                    sleep(1)
-                # test publish on defined topic
-                # client.publish('customtopic',text_message)
-		client.loop_stop()
-		client.disconnect()
+        if not ((not bruteforce_results[0]) and state==2):
+            client = mqtt.Client()
+            client.on_connect = on_connect
+            client.on_message = on_message
+            if state == 1:
+                client.username_pw_set(username,password=None)
+            elif state == 2:
+                client.username_pw_set(username,password)
+
+            # if the path to a CA certificate is available, we try to connect over TLS
+            if tls_cert != None:
+                client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                client.tls_insecure_set(True)
+            client.connect(broker_ip,port)
+            client.loop_start()
+            # Subscribe to all
+            client.subscribe('#')
+            # Subscribe to SYS topics
+            client.subscribe('$SYS/#')
+            # client will start receiving some messages
+            sleep(listening_time)
+
+            # iterate in the available topics
+            all_topics = topics_readable.union(sys_topics_readable)
+            print('Trying to publish in '+str(len(all_topics))+' topics.\nExtimated time: '+str(len(all_topics))+' seconds\n')
+            for i in all_topics:
+                # publish test message
+                if '#' in i:
+                    i = i.replace('#','')
+                print 'trying to write in: '+str(i)
+                client.publish(i,text_message)
+                sleep(1)
+            # test publish on defined topic
+            # client.publish('customtopic',text_message)
+            client.loop_stop()
+            client.disconnect()
 
     # check if there are writable topics and in case perform data tampering attack
     # in case no writable topics are found, try with a default one
@@ -369,7 +375,7 @@ if __name__== "__main__":
     # and in case perform the attack
     if dos_connections!=None:
 
-        print '\nPerforming Denial of Service...\n'
+        print ('\nPerforming Denial of Service...\n')
 
         # if there is a topic in which we can write we use that topic
         if len(topics_writable)!=0:
@@ -390,10 +396,10 @@ if __name__== "__main__":
                                                  client_cert=client_cert)
 
 
-    print '[*] LISTENING TIME:      ' + str(listening_time)
-    print '[*] DOING DOS:           ' + str(not dos_connections == None)
-    print '[*] DOING BRUTEFORCE:    ' + str(brute_force_dec)
-    print '[*] TEXT MESSAGE         ' + text_message+'\n'
+    print ('[*] LISTENING TIME:      ' + str(listening_time))
+    print ('[*] DOING DOS:           ' + str(not dos_connections == None))
+    print ('[*] DOING BRUTEFORCE:    ' + str(brute_force_dec))
+    print ('[*] TEXT MESSAGE         ' + text_message+'\n')
 
     pdfw.add_paragraph("Details of the assessment")
     pdfw.add_to_existing_paragraph("Broker ip: "+str(broker_ip))
@@ -403,12 +409,16 @@ if __name__== "__main__":
     pdfw.add_to_existing_paragraph("Brute force performed: "+str(brute_force_dec))
 
     # authorization mechanism results
-    write_results.authorization_report(pdfw, no_authentication)
+    write_results.authorization_report(pdfw, no_authentication, brocker_info)
 
     # information disclosure results
-    write_results.information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time)
+    write_results.information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, brocker_info)
     write_results.tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_readable, sys_topics_readable, text_message)
 
+    # fingerprinting
+    if brocker_info != None:
+        write_results.fingerprinting_report(pdfw, brocker_info)
+    
     # sniffing attack results
     if interface!=None:
 
@@ -431,7 +441,7 @@ if __name__== "__main__":
 
 
     # dos results
-    write_results.dos_report(pdfw, dos_connections)
+    write_results.dos_report(pdfw, dos_connections, brocker_info)
 
     # malformed data results
     if mal_data!=None:
@@ -443,40 +453,43 @@ if __name__== "__main__":
     # Printing a brief summary of the attacks on the console
     print
 
-    print '**************************************************'
-    print '                     REPORT\n'
-    print '                 Target: '+str(broker_ip)
-    print '             Listening time: '+str(listening_time)
-    print '**************************************************\n'
-    print '     + Authentication required: '+str(not no_authentication)+'\n'
-    print '     + Information disclosure:           '+str(information_disclosure)
+    print ('**************************************************')
+    print ('                     REPORT\n')
+    print ('            Target: '+str(broker_ip))
+    print ('            Listening time: '+str(listening_time))
+    print ('**************************************************\n')
+    print ('     + Authentication required: '+str(not no_authentication)+'\n')
+    print ('     + Information disclosure:           '+str(information_disclosure))
     if len(topics_readable)>0 or len(sys_topics_readable)>0:
-        print '         + # of Topics we read:          '+str(len(topics_readable))
-        print '         + # of Topics we wrote:         '+str(len(topics_writable))
-        print '         + # of SYS Topics we read:      '+str(len(sys_topics_readable))
-        print '         + # of SYS Topics we wrote:     '+str(len(sys_topics_writable))
+        print ('         + # of Topics we read:          '+str(len(topics_readable)))
+        print ('         + # of Topics we wrote:         '+str(len(topics_writable)))
+        print ('         + # of SYS Topics we read:      '+str(len(sys_topics_readable)))
+        print ('         + # of SYS Topics we wrote:     '+str(len(sys_topics_writable)))
 
-        #print '        + Topics in which we read:     '+str(topics_readable)
-        #print '        + Topics in which we wrote:    '+str(topics_writable)
+        #print ('        + Topics in which we read:     '+str(topics_readable))
+        #print ('        + Topics in which we wrote:    '+str(topics_writable))
 
-        #print '        + SYS topics in which we read:     '+str(sys_topics_readable)
-        #print '        + SYS topics in which we wrote:    '+str(sys_topics_writable)
+        #print ('        + SYS topics in which we read:     '+str(sys_topics_readable))
+        #print ('        + SYS topics in which we wrote:    '+str(sys_topics_writable))
+        if(not connected_clients == None):
+            print ('         + # of Connected Clients:       '+str(connected_clients))
+        if(not brocker_info == None):
+            print ('         + brocker info:                 '+str(brocker_info))
     else:
-        print '         + No topics detected'
-
-    print ''
+        print ('         + No topics detected')
+    print ('')
 
     if (not dos_connections == None):
-        print '     + DOS successful:                   '+str(dos_result)
-        print '         + # connections for the attack: '+str(dos_connections)
-        print ''
+        print ('     + DOS successful:                   '+str(dos_result))
+        print ('         + # connections for the attack: '+str(dos_connections))
+        print ('')
 
     if (brute_force_dec):
-        print '     + Brute force successful:           '+str(bruteforce_results[0])
-        print '         + username used:                '+username
-	if no_pass:
-		print '		+ password not required!'
-	if bruteforce_results[0]:
-		print '		+ password found:	'+str(bruteforce_results[1])
+        print ('     + Brute force successful:           '+str(bruteforce_results[0]))
+        print ('         + username used:                '+username)
+        if no_pass:
+            print ('     + password not required!')
+        if bruteforce_results[0]:
+            print ('     + password found:   '+str(bruteforce_results[1]))
 
-    print '**************************************************'
+    print ('**************************************************')

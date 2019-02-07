@@ -1,0 +1,9 @@
+mosquitto = 1.5.5
+hivemq = 4.0.2
+vernemq = 1.7.0
+emq = 3.0.1
+adafruit = 2.0.0
+machine_head = 1.0.0
+moquette = 0.12
+solace = 9.0.1.7
+thingstream = 3.1.0

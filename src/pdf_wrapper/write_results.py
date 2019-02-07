@@ -5,31 +5,33 @@ import pdf_wrapper as pdfw
 
 # Authorization mechanism section
 
-def authorization_report(pdfw, no_authentication):
+def authorization_report(pdfw, no_authentication, brocker_info):
     pdfw.add_paragraph("Authentication")
 
     # No authentication mechanism detected -> mitigations
     if no_authentication==True:
         pdfw.add_to_existing_paragraph("<b>[!] MQTTSA did not detect an authentication mechanism<b>")
-        pdfw.add_to_existing_paragraph('The tool was able to connect to the broker without specifying any kind of credential information. This may cause remote attackers to successfully connect to the broker.')
-
+        pdfw.add_to_existing_paragraph('The tool was able to connect to the broker without specifying any kind of credential information. This may cause remote attackers to successfully connect to the broker. It is strongly advised to support authentication via X.509 client certificates')
+        
         # Mitigations
         pdfw.add_sub_paragraph("<br>Suggested mitigations")
-        pdfw.add_to_existing_paragraph('It is strongly recommended to implement an authentication mechanism, so that only devices which are authenticated can interact with the broker. We suggest to implement authentication through X.509 certificates, however, a username/password enforcement can work as well, if a strong password is used.')
-        pdfw.add_to_existing_paragraph('Additional information here:')
-        pdfw.add_to_existing_paragraph('<br><a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-authentication-username-password">MQTT Security Fundamentals: Authentication with Username and Password</a>')
-        pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Password_strength">Wikipedia: Password Strenght</a>')
-        pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-x509-client-certificate-authentication">MQTT Security Fundamentals: X509 Client Certificate Authentication</a>')
-        pdfw.add_to_existing_paragraph('<a href="https://thingsboard.io/docs/user-guide/certificates/">ThingsBoard: X.509 Certificate Based Authentication</a>')
+        
+        if brocker_info != None:
+            if "mosquitto" in brocker_info:
+                pdfw.add_to_existing_paragraph('Please follow those <a href="https://primalcortex.wordpress.com/2016/11/08/mqtt-mosquitto-broker-client-authentication-and-client-certificates/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> and as follows:<font size=6><p>     listener 8883</p><p>     tls_version tlsv1.2</p><p>     cafile /etc/mosquitto/certs/ca.crt</p><p>     certfile /etc/mosquitto/certs/hostname.crt</p><p>     keyfile /etc/mosquitto/certs/hostname.key</p><p>     require_certificate true</p><p>     use_identity_as_username true</p><p>     crlfile /etc/mosquitto/certs/ca.crl</p></font>')
+        else:
+            pdfw.add_to_existing_paragraph('Refer here for additional informations')
+            #pdfw.add_to_existing_paragraph('<br><a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-authentication-username-password">MQTT Security Fundamentals: Authentication with Username and Password</a>')
+            #pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Password_strength">Wikipedia: Password Strenght</a>')
+            pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-x509-client-certificate-authentication">MQTT Security Fundamentals: X509 Client Certificate Authentication</a>')
+            pdfw.add_to_existing_paragraph('<a href="https://thingsboard.io/docs/user-guide/certificates/">ThingsBoard: X.509 Certificate Based Authentication</a>')
     else:
-
         # Authentication mechanism detected
         pdfw.add_to_existing_paragraph("MQTTSA detected an authentication mechanism.")
 
-
 # Information disclosure section
 
-def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time):
+def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, brocker_info):
     pdfw.add_paragraph("Information disclosure")
 
     # Description of the test
@@ -45,19 +47,23 @@ def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, li
 
         # Mitigations    
         pdfw.add_sub_paragraph("<br>Suggested mitigations")
-        pdfw.add_to_existing_paragraph('It is strongly recommended to enforce an authorization mechanism in order to grant the access to confidential resources only to the specified users or devices. There are two possible approaches: Access Control List (ACL) and Role-based Access Control (RBAC). Unfortunately, the current version of MQTT support authorization only broker-side.')
-        pdfw.add_to_existing_paragraph('Additional information here:')
-        pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Access_control_list">Wikipedia: Access Control List</a>')
-        pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Role-based_access_control">Wikipedia: Role-based Access Control</a>')
-        pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-authorization/">MQTT Security Fundamentals: Authorization</a>')
-        pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-oauth-2-0-mqtt">MQTT Security Fundamentals: OAuth 2.0 & MQTT</a>')
-        pdfw.add_to_existing_paragraph('<a href="http://www.steves-internet-guide.com/topic-restriction-mosquitto-configuration/">Configuring and Testing Mosquitto MQTT Topic Restrictions</a>')
-
+        pdfw.add_to_existing_paragraph('It is strongly recommended to enforce an authorization mechanism in order to grant the access to confidential resources only to the specified users or devices. There are two possible approaches: Access Control List (ACL) and Role-based Access Control (RBAC).')
+        #Unfortunately, the current version of MQTT support authorization only broker-side.')
+        
+        if brocker_info != None:
+            if "mosquitto" in brocker_info:
+                pdfw.add_to_existing_paragraph('If restricting access via ACLs, please follow those <a href="http://www.steves-internet-guide.com/topic-restriction-mosquitto-configuration/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> and by integrating the <i>acl_file</i> parameter: e.g., <i>acl_file /mosquitto/config/acls</i>. To restict a client to publish only on topics with his clientname as prefix, use the following ACL: <i>pattern readwrite topic/%c/#</i>')
+        else: 
+            pdfw.add_to_existing_paragraph('Additional information here:')
+            pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Access_control_list">Wikipedia: Access Control List</a>')
+            pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Role-based_access_control">Wikipedia: Role-based Access Control</a>')
+            pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-authorization/">MQTT Security Fundamentals: Authorization</a>')
+            pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-oauth-2-0-mqtt">MQTT Security Fundamentals: OAuth 2.0 & MQTT</a>')
+            pdfw.add_to_existing_paragraph('<a href="http://www.steves-internet-guide.com/topic-restriction-mosquitto-configuration/">Configuring and Testing Mosquitto MQTT Topic Restrictions</a>')
 
         # MQTTSA did not found readable topics -> increase listening_time
     else:
-        pdfw.add_to_existing_paragraph("<b>[!] In this case, MQTTSA was not able to intercept messages exchanged by clients. Try to perform the assessment again, increasing the 'listening_time' parameter</b>")
-
+        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA was not able to intercept messages exchanged by clients. Try to perform the assessment again, increasing the 'listening_time' parameter</b>")
 
 # Tampering data section
 
@@ -82,8 +88,67 @@ def tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_rea
     # MQTTSA did not found readable topics -> increase listening_time
     else:
         pdfw.add_to_existing_paragraph("<b>[!] Since MQTTSA was not able to intercept any message, this vulnerability was not tested. Try to perform the assessment again, increasing the 'listening_time' parameter.</b>")
+    
+# Fingerprinting
 
-
+def fingerprinting_report(pdfw, brocker_info):
+    pdfw.add_paragraph("Brocker Fingerprinting")
+        
+    brockers = {}
+    with open("brockers_last_version.txt") as brockers_last_version:
+        for line in brockers_last_version:
+            name, version = line.partition("=")[::2]
+            brockers[name.strip()] = version.strip()
+        
+    # Found informations regarding brocker type and version -> check CVEs
+    pdfw.add_to_existing_paragraph("MQTTSA detected the following MQTT brocker: "+str(brocker_info)+". ")
+    if "mosquitto" in brocker_info:
+        if not brockers ["mosquitto"] in brocker_info:
+            pdfw.add_to_existing_paragraph('<b>[!]Mosquitto version is not updated</b>: please refer to the last <a href="https://mosquitto.org/ChangeLog.txt">Change log</a> for bugs and security issues.')
+        else:
+            pdfw.add_to_existing_paragraph('Mosquitto version IO is up-to-date.')
+    elif "hivemq" in brocker_info:
+        if not brockers ["hivemq"] in brocker_info:
+            pdfw.add_to_existing_paragraph('<b>[!]HiveMQ version is not updated</b>: please refer to the last <a href="https://www.hivemq.com/changelog/">Change log</a> for bugs and security issues.')
+        else:
+            pdfw.add_to_existing_paragraph('HiveMQ version IO is up-to-date.')
+    elif "vernemq" in brocker_info:
+        if not brockers ["vernemq"] in brocker_info:
+            pdfw.add_to_existing_paragraph('<b>[!]VerneMQ version is not updated</b>: please refer to the last <a href="https://github.com/vernemq/vernemq/blob/master/changelog.md">Change log</a> for bugs and security issues.')
+        else:
+            pdfw.add_to_existing_paragraph('VerneMQ version IO is up-to-date.')
+    elif "emq" in brocker_info:
+        if not brockers ["emqx"] in brocker_info:
+            pdfw.add_to_existing_paragraph('<b>[!]EMQ version is not updated</b>: please refer to the last <a href="http://emqtt.io/changelogs">Change log</a> for bugs and security issues.')
+        else:
+            pdfw.add_to_existing_paragraph('EMQ version IO is up-to-date.')
+    elif "adafruit" in brocker_info:
+        if not brockers ["adafruit"] in brocker_info:
+            pdfw.add_to_existing_paragraph('<b>[!]Adafruit IO version is not updated</b>: please refer to the last <a href="https://io.adafruit.com/blog/">Change log</a> for bugs and security issues.')
+        else:
+            pdfw.add_to_existing_paragraph('Adafruit IO is up-to-date.')
+    elif "machine_head" in brocker_info:
+        if not brockers ["machine_head"] in brocker_info:
+            pdfw.add_to_existing_paragraph('<b>[!]Machine Head version is not updated</b>: please refer to the last <a href="https://github.com/clojurewerkz/machine_head/blob/master/ChangeLog.md">Change log</a> for bugs and security issues.')
+        else:
+            pdfw.add_to_existing_paragraph('Machine Head is up-to-date.')
+    elif "moquette" in brocker_info:
+        if not brockers ["moquette"] in brocker_info:
+            pdfw.add_to_existing_paragraph('<b>[!]Moquette version is not updated</b>: please refer to the last <a href="https://github.com/andsel/moquette/blob/master/ChangeLog.txt">Change log</a> for bugs and security issues.')
+        else:
+            pdfw.add_to_existing_paragraph('Moquette is up-to-date.')
+    elif "solace" in brocker_info:
+        if not brockers ["solace"] in brocker_info:
+            pdfw.add_to_existing_paragraph('<b>[!]Solace PubSub+ version is not updated</b>: please refer to the last <a href="https://products.solace.com/download/PUBSUB_STAND_RN">Release notes</a> for bugs and security issues.')
+        else:
+            pdfw.add_to_existing_paragraph('Solace PubSub+ is up-to-date.')
+    elif "thingstream" in brocker_info:
+        if not brockers ["thingstream"] in brocker_info:
+            pdfw.add_to_existing_paragraph('<b>[!]Thingstream version is not updated</b>: please refer to the last <a href="https://sites.google.com/thingstream.io/docs/release-notes">Release notes</a> for bugs and security issues.')
+        else:
+            pdfw.add_to_existing_paragraph('Thingstream is up-to-date.')
+    else:
+        pdfw.add_to_existing_paragraph('MQTTSA was not able to detect if the brocker is up-to-date. Please verify manually.')
 
 # Sniffing data section
 
@@ -114,8 +179,6 @@ def sniffing_report(pdfw, usernames, passwords, clientids, listening_time):
     # MQTTSA was unable to find credential information
     else:
         pdfw.add_to_existing_paragraph("<b>MQTTSA was not able to intercept any credential information.<b>") 
-
-
 
 # Brute force section
 
@@ -157,10 +220,9 @@ def brute_force_report(pdfw, username, wordlist, password, no_pass):
         pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-x509-client-certificate-authentication">MQTT Security Fundamentals: X509 Client Certificate Authentication</a>')
         pdfw.add_to_existing_paragraph('<a href="https://thingsboard.io/docs/user-guide/certificates/">ThingsBoard: X.509 Certificate Based Authentication</a>')
 
-
 # Denial of Service section
 
-def dos_report(pdfw, dos_connections):
+def dos_report(pdfw, dos_connections, brocker_info):
     pdfw.add_paragraph("Denial of service")
     
     # Description
@@ -171,6 +233,11 @@ def dos_report(pdfw, dos_connections):
     # Mitigations 
     pdfw.add_sub_paragraph("<br>Suggested mitigations")
     pdfw.add_to_existing_paragraph('In case of MQTT services connected in environments with limited bandwidth capacity, it is strongly recommended to: add a firewall and enforce rules to prevent the Dos, use a load balancer, limit the number of clients and packet dimension.')
+    
+    if brocker_info != None:
+        if "mosquitto" in brocker_info:
+            pdfw.add_to_existing_paragraph('In Mosquitto it is also possible to set the <i>persistent_client_expiration</i>, <i>message_size_limit</i> and <i>max_connections</i> parameters in the configuration file (eg. to, respecively, 1h, 5120 and 5). Refer to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> for details')
+    
     pdfw.add_to_existing_paragraph('Additional information here:')
     pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems">MQTT Security Fundamentals: Securing MQTT Systems</a>')
     pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Password_strength">Mosquitto documentation: message_size_limit and max_connection</a>')

@@ -46,4 +46,4 @@ def add_to_existing_paragraph(msg):
 def output_pdf():
     global html
     pdf.write_html(html)
-    pdf.output("report.pdf")
+    pdf.output("../report.pdf")
