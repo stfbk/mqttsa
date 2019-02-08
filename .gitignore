@@ -1,2 +1,8 @@
 report.pdf
-
+/src/*.pyc
+/src/bruteforce/*.pyc
+/src/dos/*.pyc
+/src/malformed_data/*.pyc
+/src/pdf_wrapper/*.pyc
+/src/sniff/*.pyc
+/src/utils/*.pyc

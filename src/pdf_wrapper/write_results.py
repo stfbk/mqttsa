@@ -11,14 +11,14 @@ def authorization_report(pdfw, no_authentication, brocker_info):
     # No authentication mechanism detected -> mitigations
     if no_authentication==True:
         pdfw.add_to_existing_paragraph("<b>[!] MQTTSA did not detect an authentication mechanism<b>")
-        pdfw.add_to_existing_paragraph('The tool was able to connect to the broker without specifying any kind of credential information. This may cause remote attackers to successfully connect to the broker. It is strongly advised to support authentication via X.509 client certificates')
+        pdfw.add_to_existing_paragraph('The tool was able to connect to the broker without specifying any kind of credential information. This may cause remote attackers to successfully connect to the broker. It is strongly advised to support authentication via X.509 client certificates.')
         
         # Mitigations
-        pdfw.add_sub_paragraph("<br>Suggested mitigations")
+        pdfw.add_sub_paragraph("Suggested mitigations")
         
         if brocker_info != None:
             if "mosquitto" in brocker_info:
-                pdfw.add_to_existing_paragraph('Please follow those <a href="https://primalcortex.wordpress.com/2016/11/08/mqtt-mosquitto-broker-client-authentication-and-client-certificates/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> and as follows:<font size=6><p>     listener 8883</p><p>     tls_version tlsv1.2</p><p>     cafile /etc/mosquitto/certs/ca.crt</p><p>     certfile /etc/mosquitto/certs/hostname.crt</p><p>     keyfile /etc/mosquitto/certs/hostname.key</p><p>     require_certificate true</p><p>     use_identity_as_username true</p><p>     crlfile /etc/mosquitto/certs/ca.crl</p></font>')
+                pdfw.add_to_existing_paragraph('Please follow those <a href="https://primalcortex.wordpress.com/2016/11/08/mqtt-mosquitto-broker-client-authentication-and-client-certificates/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a>. An excerpt of a configuration file is provided below:<font size=6><p>     listener 8883<br/>     cafile /etc/mosquitto/certs/ca.crt<br/>     certfile /etc/mosquitto/certs/hostname.crt<br/>     keyfile /etc/mosquitto/certs/hostname.key<br/>     require_certificate true<br/>     use_identity_as_username true<br/>     crlfile /etc/mosquitto/certs/ca.crl</p></font>')
         else:
             pdfw.add_to_existing_paragraph('Refer here for additional informations')
             #pdfw.add_to_existing_paragraph('<br><a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-authentication-username-password">MQTT Security Fundamentals: Authentication with Username and Password</a>')
@@ -46,13 +46,13 @@ def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, li
             pdfw.add_to_existing_paragraph("The SYS topics are: "+str(list(sys_topics_readable)))
 
         # Mitigations    
-        pdfw.add_sub_paragraph("<br>Suggested mitigations")
+        pdfw.add_sub_paragraph("Suggested mitigations")
         pdfw.add_to_existing_paragraph('It is strongly recommended to enforce an authorization mechanism in order to grant the access to confidential resources only to the specified users or devices. There are two possible approaches: Access Control List (ACL) and Role-based Access Control (RBAC).')
         #Unfortunately, the current version of MQTT support authorization only broker-side.')
         
         if brocker_info != None:
             if "mosquitto" in brocker_info:
-                pdfw.add_to_existing_paragraph('If restricting access via ACLs, please follow those <a href="http://www.steves-internet-guide.com/topic-restriction-mosquitto-configuration/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> and by integrating the <i>acl_file</i> parameter: e.g., <i>acl_file /mosquitto/config/acls</i>. To restict a client to publish only on topics with his clientname as prefix, use the following ACL: <i>pattern readwrite topic/%c/#</i>')
+                pdfw.add_to_existing_paragraph('If restricting access via ACLs, please follow those <a href="http://www.steves-internet-guide.com/topic-restriction-mosquitto-configuration/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a>. For instance, integrate the <i>acl_file</i> parameter (<i>acl_file /mosquitto/config/acls</i>) and restict a client to interact only on topics with his clientname as prefix (ACL <i>pattern readwrite topic/%c/#</i>)')
         else: 
             pdfw.add_to_existing_paragraph('Additional information here:')
             pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Access_control_list">Wikipedia: Access Control List</a>')
@@ -72,7 +72,7 @@ def tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_rea
 
     # MQTTSA found readable topics -> check for writable topics
     if len(topics_readable)+len(sys_topics_readable)>0:
-        pdfw.add_to_existing_paragraph("After having successfully intercepted some messages, MQTTSA automatically created a new message (having as a payload the string '"+str(text_message)+"') and send it into every topic it is able to intercept. Remote attackers could exploit it to write in specific topics pretending to be a specific device and send tampered measures. <br>")
+        pdfw.add_to_existing_paragraph("After having successfully intercepted some messages, MQTTSA automatically created a new message (having as a payload the string '"+str(text_message)+"') and send it to every topic it was able to intercept. Remote attackers could exploit it to write in specific topics pretending to be a client (by his ID); e.g., send tampered measures to a sensor. <br>")
 
         # MQTTSA found writable topics -> Suggestions as in information disclosure
         if len(sys_topics_writable)+len(topics_writable)>0:
@@ -152,7 +152,7 @@ def fingerprinting_report(pdfw, brocker_info):
 
 # Sniffing data section
 
-def sniffing_report(pdfw, usernames, passwords, clientids, listening_time):
+def sniffing_report(pdfw, usernames, passwords, clientids, listening_time, brocker_info):
     pdfw.add_paragraph("Sniffing")
 
     # Description
@@ -167,8 +167,13 @@ def sniffing_report(pdfw, usernames, passwords, clientids, listening_time):
 
         # Mitigations
         pdfw.add_sub_paragraph("<br>Suggested mitigations")
-        pdfw.add_to_existing_paragraph('We strongly suggest to implement the MQTT protocol to work over TLS (secure-MQTT), as reported in the official documentation of MQTT. TLS provides a secure communication channel between client and server, thus, assuming the use of a secure version of TLS and cipher suites, the content of the communication cannot be read or altered by third parties.')
-        pdfw.add_to_existing_paragraph('ATTENTION! Using MQTT over TLS could lead to a communication overhead and an increase of CPU usage, especially during the handshake. In devices which have constrained resources, TLS could have a severe impact. In these cases there are other (but less secure) solutions that could be used to secure the communication, such as encrypting only specific messages (for instance CONNECT and PUBLISH).')
+        pdfw.add_to_existing_paragraph('We strongly suggest to enforce TLS in MQTT (secure-MQTT). TLS provides a secure communication channel between clients and server: assuming the correct configuration of TLS (secure version and cipher suites=, the content of the communication cannot be read or altered by third parties.')
+           
+        if brocker_info != None:
+            if "mosquitto" in brocker_info:
+                pdfw.add_to_existing_paragraph('In Mosquitto it is possible to set the <i>tls_version</i> parameter (e.g. to tlsv1.2). Refer to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> for details')
+
+        pdfw.add_to_existing_paragraph('<br>Warning: using MQTT over TLS could lead to a communication overhead and an increase in CPU usage, especially during the connection handshake. In devices with constrained resources, supporting TLS can have a severe impact. In these cases there are other (but less secure) solutions that could be used to secure the communication, such as encrypting only specific messages (for instance CONNECT and PUBLISH).')
         pdfw.add_to_existing_paragraph('<br>Additional information here:')
         pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-tls-ssl">MQTT security fundamentals: TLS / SSL</a>')
         pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/how-does-tls-affect-mqtt-performance/">MQTT security fundamentals: how does TLS affect MQTT performance?</a>')
@@ -226,17 +231,21 @@ def dos_report(pdfw, dos_connections, brocker_info):
     pdfw.add_paragraph("Denial of service")
     
     # Description
-    pdfw.add_to_existing_paragraph("<b>[!] MQTTSA opened "+str(dos_connections)+" connections to stress the broker and test how it will react in case of Denial of Service.<b>")
-    pdfw.add_to_existing_paragraph("The tool is not able to determine if the test resulted in the disconnection of other clients; thus the user should check the logfile in the broker and see if the connection was working correctly.")
+    if dos_connections != None:
+        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA opened "+str(dos_connections)+" connections to stress the broker and test how it will react in case of Denial of Service.<b>")
+    else:
+        pdfw.add_to_existing_paragraph("<b>MQTTSA was not able to opened any connection to perform Denial of Service attacks towards the broker.<b>")    
+    
+    pdfw.add_to_existing_paragraph("The tool is not able to determine if the test resulted in the loss of connection/reconnection of other clients; thus the user should check the logfile of the broker or any reconnction attempt from clients.")
     pdfw.add_to_existing_paragraph("In case the test did not result in disconnections or delays, the test can be performed again increasing the <i>dos_connection</i> value.")
     
     # Mitigations 
     pdfw.add_sub_paragraph("<br>Suggested mitigations")
-    pdfw.add_to_existing_paragraph('In case of MQTT services connected in environments with limited bandwidth capacity, it is strongly recommended to: add a firewall and enforce rules to prevent the Dos, use a load balancer, limit the number of clients and packet dimension.')
+    pdfw.add_to_existing_paragraph('In case of MQTT environments with limited bandwidth capacity, it is recommended to prevent Denial of Service attacks by: implementing a firewall with appropriate rules, use a load balancer, limit the number of clients and packet dimension.')
     
     if brocker_info != None:
         if "mosquitto" in brocker_info:
-            pdfw.add_to_existing_paragraph('In Mosquitto it is also possible to set the <i>persistent_client_expiration</i>, <i>message_size_limit</i> and <i>max_connections</i> parameters in the configuration file (eg. to, respecively, 1h, 5120 and 5). Refer to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> for details')
+            pdfw.add_to_existing_paragraph('In Mosquitto it is possible to set the <i>persistent_client_expiration</i>, <i>message_size_limit</i> and <i>max_connections</i> parameters in the configuration file (eg. to, respecively, 1h, 5120 and 5). Refer to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> for details')
     
     pdfw.add_to_existing_paragraph('Additional information here:')
     pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems">MQTT Security Fundamentals: Securing MQTT Systems</a>')

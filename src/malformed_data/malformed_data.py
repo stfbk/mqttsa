@@ -37,15 +37,15 @@ Returns:
                             the data used to perform the test and the result (it provides
                             also information about the errors)
 """
-def malformed_data(host, port, topic, tls_cert, client_cert):
+def malformed_data(host, port, topic, tls_cert, client_cert, client_key):
     # try malformed data for CONNECT packet
-    test_connect_packet(host, port, topic, tls_cert, client_cert)
+    test_connect_packet(host, port, topic, tls_cert, client_cert, client_key)
     # try malformed data for PUBLISH packet
-    test_publish_packet(host, port, topic, tls_cert, client_cert)
+    test_publish_packet(host, port, topic, tls_cert, client_cert, client_key)
     # return the results of the test
     return mal_data
 
-def test_connect_packet(host, port, topic, tls_cert, client_cert):
+def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
     global mal_data
     client = mqtt.Client()
 
@@ -58,7 +58,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert):
             client.reinitialise(client_id=value, clean_session=True, userdata=None)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
-			client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
+			client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
 					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
 			client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
@@ -79,7 +79,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert):
             client.reinitialise(clean_session=value, userdata=None)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
-			client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
+			client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
 					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
 			client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
@@ -100,7 +100,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert):
             client.reinitialise(clean_session=True, userdata=value)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
-			client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
+			client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
 					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
 			client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
@@ -121,7 +121,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert):
             client.reinitialise(clean_session=True, userdata=None)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
-			client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
+			client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
 					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
 			client.tls_insecure_set(True)
             client.connect(host, port, keepalive=value, bind_address="")
@@ -134,12 +134,12 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert):
             mal.add_error(err)
     mal_data.append(mal)
 
-def test_publish_packet(host, port, topic, tls_cert, client_cert):
+def test_publish_packet(host, port, topic, tls_cert, client_cert, client_key):
     global mal_data
     client = mqtt.Client()
     # if the path to the CA certificate it will try to connect over TLS
     if tls_cert != None:
-            client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
+            client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
                             tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
             client.tls_insecure_set(True)
     client.connect(host, port, keepalive=60, bind_address="")

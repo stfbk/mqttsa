@@ -16,7 +16,7 @@ The following arguments are available to set specific parameters of the executio
 -p PORT             Specify the port, if not specified: 1883  
 --md                Add flag --md to perform the malformed data attack  
 --ni                Add flag --ni to perform non intrusive attacks  
---tls=TLS_CERT      Specify the path for a CA certificate to use to connect using tls  
+--tls               Specify the path for a CA certificate to use when connecting with TLS. If required by the brocker, specify also the path to a client certificate and key with, respectively, the "--cert" and "--key" options
 ```
 
 The attacks implemented are the following:  

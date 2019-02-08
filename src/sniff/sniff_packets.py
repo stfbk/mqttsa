@@ -150,7 +150,7 @@ def sniffing_attack(interface, listening_time):
 		message = template.format(type(e).__name__, e.args)
 		print message
 		return credentials, clientids
-    return credentials, clientids
+    return list(set(credentials)), list(set(clientids))
 
 # used for running only this attack for testing purposes
 if __name__=="__main__":
@@ -161,10 +161,12 @@ if __name__=="__main__":
         cap.apply_on_packets(print_info, timeout=float(time))
         #cap.sniff()
     except concurrent.futures.TimeoutError:
-		print "\nSniffing terminated: "+str(num_packets)+" packets intercepted on "+inf
-		for i in range(len(credentials)):
+        credentials = list(set(credentials))
+        clientids = list(set(clientids))
+        print "\nSniffing terminated: "+str(num_packets)+" packets intercepted on "+inf
+        for i in range(len(credentials)):
 		    print("Credential"+"["+str(i)+"]: "+credentials[i].username+" : "+credentials[i].password)
-		for i in range(len(clientids)):
+        for i in range(len(clientids)):
 		    print("ClientID"+"["+str(i)+"]: "+clientids[i])
     except Exception as e:
         template = "An exception of type {0} occurred during Sniffing. Arguments:\n{1!r}"

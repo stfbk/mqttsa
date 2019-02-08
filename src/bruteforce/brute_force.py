@@ -23,7 +23,7 @@ Returns:
     results ([bool, str]): array containing a password and the related boolean indicating if the
                            passwod worked or not
 """
-def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert):
+def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert, client_key):
 	global connected
 	global password
 	connected = False
@@ -42,7 +42,7 @@ def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert)
 
                         # if the tls_cert value is different from None, try to connect over TLS
 			if tls_cert != None:
-				client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
+				client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
 					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
 				client.tls_insecure_set(True)
 			client.connect(ip_target,port)

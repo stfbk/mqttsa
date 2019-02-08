@@ -64,10 +64,10 @@ def on_message(client, userdata, message):
     global brocker_info
 
     # print message and topic
-    #try:
-        #print ('message received '+ message.payload.decode("utf-8"))
-    #except:
-        #print ('message received but cannot decode in utf-8: ' + str(message.payload))
+    try:
+        print ('message received '+ message.payload.decode("utf-8"))
+    except:
+        print ('message received but cannot decode in utf-8: ' + str(message.payload))
 
     # If we can read, add in readable set
     if '$SYS' in str(message.topic):
@@ -127,6 +127,7 @@ if __name__== "__main__":
     non_intrusive       = options.non_intrusive
     tls_cert            = options.tls_cert
     client_cert         = options.client_cert
+    client_key          = options.client_key
     brute_force_dec     = True
 
     connected_clients = None
@@ -211,9 +212,12 @@ if __name__== "__main__":
     #client.on_connect = on_connect
     client.on_message = on_message
 
-    # if the path to a CA certificate is available, we try to connect over TLS
     if tls_cert != None:
-        client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+        if hasattr(ssl, "PROTOCOL_TLS"):
+            tls_prot_v = ssl.PROTOCOL_TLS
+        else:
+            tls_prot_v = ssl.PROTOCOL_TLSv1
+        client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
         client.tls_insecure_set(True)
 
     # connect to the specified broker
@@ -261,7 +265,11 @@ if __name__== "__main__":
 
             # if the path to a CA certificate is available, we try to connect over TLS
             if tls_cert != None:
-                client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                if hasattr(ssl, "PROTOCOL_TLS"):
+                    tls_prot_v = ssl.PROTOCOL_TLS
+                else:
+                    tls_prot_v = ssl.PROTOCOL_TLSv1
+                client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
                 client.tls_insecure_set(True)
 
             client.connect(broker_ip,port)
@@ -281,7 +289,11 @@ if __name__== "__main__":
 
         # if the path to a CA certificate is available, we try to connect over TLS
         if tls_cert != None:
-            client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+            if hasattr(ssl, "PROTOCOL_TLS"):
+                tls_prot_v = ssl.PROTOCOL_TLS
+            else:
+                tls_prot_v = ssl.PROTOCOL_TLSv1
+            client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
             client.tls_insecure_set(True)
 
         # connect to the specified broker
@@ -308,7 +320,11 @@ if __name__== "__main__":
 
                 # if the path to a CA certificate is available, we try to connect over TLS
                 if tls_cert != None:
-                    client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                    if hasattr(ssl, "PROTOCOL_TLS"):
+                        tls_prot_v = ssl.PROTOCOL_TLS
+                    else:
+                        tls_prot_v = ssl.PROTOCOL_TLSv1
+                    client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
                     client.tls_insecure_set(True)
 
                 # connect to the specified broker
@@ -332,7 +348,11 @@ if __name__== "__main__":
 
             # if the path to a CA certificate is available, we try to connect over TLS
             if tls_cert != None:
-                client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                if hasattr(ssl, "PROTOCOL_TLS"):
+                    tls_prot_v = ssl.PROTOCOL_TLS
+                else:
+                    tls_prot_v = ssl.PROTOCOL_TLSv1
+                client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
                 client.tls_insecure_set(True)
             client.connect(broker_ip,port)
             client.loop_start()
@@ -367,7 +387,7 @@ if __name__== "__main__":
             mal_data_topic = next(iter(sys_topics_writable))
         else:
             mal_data_topic = "Topic1"
-        mal_data = md.malformed_data(broker_ip, port, mal_data_topic, tls_cert, client_cert)
+        mal_data = md.malformed_data(broker_ip, port, mal_data_topic, tls_cert, client_cert, client_key)
     else:
         mal_data = None
 
@@ -433,7 +453,7 @@ if __name__== "__main__":
             if p != '':
                 passwords.append(p)
 
-        write_results.sniffing_report(pdfw, usernames, passwords, clientIds, listening_time)
+        write_results.sniffing_report(pdfw, usernames, passwords, clientIds, listening_time, brocker_info)
 
     # brute force results
     if brute_force_dec == True or brute_force_cannot_be_executed == True:

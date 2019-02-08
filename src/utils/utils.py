@@ -38,9 +38,12 @@ def create_parser():
     # use '--tls' to insert the path for a CA certificate to use to connect using tls
     parser.add_option('--tls', dest='tls_cert', type='string' ,help='Specify the path for a CA certificate to use to connect using tls')
 
-    # use '--cert' to insert the path for a client certificate to use to connect using tls
+    # use '--cert' to insert the path for a client certificate
     parser.add_option('--cert', dest='client_cert', type='string' ,help='Specify the path for a client certificate to use to connect using tls')
-
+    
+    # use '--key' to insert the path for a client key
+    parser.add_option('--key', dest='client_key', type='string' ,help='Specify the path of the client key associated to its certificate')
+    
     return parser
 
 
