@@ -37,11 +37,11 @@ Returns:
                             the data used to perform the test and the result (it provides
                             also information about the errors)
 """
-def malformed_data(host, port, topic, tls_cert, client_cert, client_key):
+def malformed_data(host, port, topic, tls_cert, client_cert, client_key, credentials):
     # try malformed data for CONNECT packet
     test_connect_packet(host, port, topic, tls_cert, client_cert, client_key)
     # try malformed data for PUBLISH packet
-    test_publish_packet(host, port, topic, tls_cert, client_cert, client_key)
+    test_publish_packet(host, port, topic, tls_cert, client_cert, client_key, credentials)
     # return the results of the test
     return mal_data
 
@@ -134,7 +134,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             mal.add_error(err)
     mal_data.append(mal)
 
-def test_publish_packet(host, port, topic, tls_cert, client_cert, client_key):
+def test_publish_packet(host, port, topic, tls_cert, client_cert, client_key, credentials):
     global mal_data
     client = mqtt.Client()
     # if the path to the CA certificate it will try to connect over TLS
@@ -142,6 +142,10 @@ def test_publish_packet(host, port, topic, tls_cert, client_cert, client_key):
             client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
                             tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
             client.tls_insecure_set(True)
+            
+    if (len(credentials) !=0):
+            client.username_pw_set(credentials[0].username, credentials[0].password)
+    
     client.connect(host, port, keepalive=60, bind_address="")
 
     #Try every malformed value for the topic value

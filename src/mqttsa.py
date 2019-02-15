@@ -25,14 +25,17 @@ def on_connect(client, userdata, flags, rc):
     global brute_force_cannot_be_executed
     global no_pass
 
+    #Set to true if the authentication with intercepted credential succeeds
+    global auth_anyway
+        
     # if return code is 0, connected!
     if rc==0:
-        print ('Connected! Returned code: ' +str(rc))
         # the state variable is used to trace how we connected to the broker
         # state = 0 means no username and passwords
         # state = 1 means username but no password
         # state = 2 means username and password
         if state==0:
+            print ('Connected! Returned code: ' +str(rc)+'\n')
             if brute_force_dec:
                 # User asked bruteforce, but not needed
                 brute_force_cannot_be_executed = True
@@ -45,13 +48,17 @@ def on_connect(client, userdata, flags, rc):
             print ('No password required!')
             no_pass = True
         elif state ==2:
-            print ('Connected successfully using password found with brute force')
+            print ('Connected successfully using password found with brute force\n')
+        elif state ==4:
+            auth_anyway = True
+            print('Connected successfully using a usename and password found with sniffing\n')
     elif (rc!=4):
         brute_force_dec = False
         # we create a special flag to have an appropriate section in the final report
         brute_force_cannot_be_executed = True
         # authentication may be required
-        print ('Not connected, Returned code: '+str(rc))
+        if(state != 0):
+            print ('Not connected, Returned code: '+str(rc)+'\n')
 
 # function called after the reception of a message
 def on_message(client, userdata, message):
@@ -102,7 +109,7 @@ if __name__== "__main__":
     global brute_force_cannot_be_executed
     global connected_clients
     global brocker_info
-
+    
     # PARSING INPUT
     parser = utils.create_parser()
     pdf = pdfw.init()
@@ -149,7 +156,8 @@ if __name__== "__main__":
     elif not os.path.exists(wordlist_path):
         print ('[!] path for the wordlist not found!')
         quit(42)
-    elif threads== None or threads<1:
+    
+    if threads== None or threads<1:
         print ('[!] threads wrong or not specified, setting it to 10')
         threads=10
 
@@ -181,8 +189,8 @@ if __name__== "__main__":
 
     # VARIABLES
 
-    # authentication may be required
-    no_authentication = True
+    # authentication may be required - Set to true if it is able to connect
+    no_authentication = False
     # information disclosure
     information_disclosure = False
     # topics available
@@ -195,8 +203,10 @@ if __name__== "__main__":
     bruteforce_results = [False]
     brute_force_cannot_be_executed = False
     password = None
-    # SCRIPT
+    auth_anyway = False
 
+    # SCRIPT
+    
     # get broker IP as string in argv
     broker_ip = sys.argv[1]
 
@@ -205,11 +215,11 @@ if __name__== "__main__":
 
     # first we sniff on a specific interface (if specified) and we try to intercept credentials
     if interface!=None:
-        credentials, clientIds = sniff.sniffing_attack(interface, listening_time)
+        credentials, clientIds = sniff.sniffing_attack(interface, listening_time, port)
 
     # try to connect
     client = mqtt.Client()
-    #client.on_connect = on_connect
+    client.on_connect = on_connect
     client.on_message = on_message
 
     if tls_cert != None:
@@ -225,7 +235,7 @@ if __name__== "__main__":
     client.loop_start()
     print ('Trying to connect...\n')
     sleep(5)
-
+    
     # in case connection worked
     if (no_authentication):
         # Subscribe to all
@@ -242,7 +252,7 @@ if __name__== "__main__":
         # if the non intrusive flag was set, we just listen for messages but we don't try to write onto them
         if non_intrusive != True:
             all_topics = topics_readable.union(sys_topics_readable)
-            print('Trying to publish in '+str(len(all_topics))+' topics.\nExtimated time: '+str(len(all_topics))+' seconds\n')
+            print('\nTrying to publish in '+str(len(all_topics))+' topics.\nExtimated time: '+str(len(all_topics))+' seconds\n')
             for i in all_topics:
                 # publish test message
                 if '#' in i:
@@ -251,16 +261,19 @@ if __name__== "__main__":
                 client.publish(i,text_message)
                 sleep(1)
 
-        client.loop_stop()
-        client.disconnect()
+    client.loop_stop()
+    client.disconnect()
 
+    # state 4 -> Attempt authentication with intercepted data
+    state = 4
+    
     # in case we were not able to connect first we try to use credentials intercepted with the 
     # sniffing attack (if specified), otherwise we will proceed with the other attacks
     if interface!=None:
         for c in credentials:
             u = c.username
             p = c.password
-            print ('trying to connect with username: ' + u + ' and password: ' + p)
+            print ('Trying to connect with username: ' + u + ' and password: ' + p)
             client.username_pw_set(u, p)
 
             # if the path to a CA certificate is available, we try to connect over TLS
@@ -274,7 +287,25 @@ if __name__== "__main__":
 
             client.connect(broker_ip,port)
             client.loop_start()
-            sleep(3)
+            
+            client.subscribe('#')
+            client.subscribe('$SYS/#')
+            
+            sleep(5)
+            
+            # if the non intrusive flag was set, we just listen for messages but we don't try to write onto them
+            if non_intrusive != True and (len(topics_writable.union(sys_topics_writable))!=0):
+                all_topics = topics_readable.union(sys_topics_readable)
+                for i in all_topics:
+                    # publish test message
+                    if '#' in i:
+                        i = i.replace('#','')
+                    print ('Trying to write in: '+str(i) +' as '+u)
+                    client.publish(i,text_message)
+                    sleep(1)
+            
+            client.loop_stop()
+            client.disconnect()
 
     # if the user wants to perform the brute force and if it is possible based on the return codes from the broker
     if brute_force_dec == True and client_cert == None:
@@ -301,10 +332,9 @@ if __name__== "__main__":
         client.loop_start()
         sleep(5)
         client.loop_stop()
+        client.disconnect()
         if not no_pass:
             print ('\nPerforming brute force...\n')
-            client.loop_stop()
-            client.disconnect()
             # perform brute force
             bruteforce_results = bruteforce.brute_force(broker_ip,port,username,wordlist_path, tls_cert, client_cert)
                 
@@ -332,10 +362,9 @@ if __name__== "__main__":
                 client.loop_start()
                 sleep(3)
                 client.loop_stop()
+                client.disconnect()
             else:
                 print '[!] Brute force was not successful\n'
-                client.loop_stop()
-        client.disconnect()
 
         if not ((not bruteforce_results[0]) and state==2):
             client = mqtt.Client()
@@ -387,7 +416,7 @@ if __name__== "__main__":
             mal_data_topic = next(iter(sys_topics_writable))
         else:
             mal_data_topic = "Topic1"
-        mal_data = md.malformed_data(broker_ip, port, mal_data_topic, tls_cert, client_cert, client_key)
+        mal_data = md.malformed_data(broker_ip, port, mal_data_topic, tls_cert, client_cert, client_key, credentials)
     else:
         mal_data = None
 
@@ -429,10 +458,10 @@ if __name__== "__main__":
     pdfw.add_to_existing_paragraph("Brute force performed: "+str(brute_force_dec))
 
     # authorization mechanism results
-    write_results.authorization_report(pdfw, no_authentication, brocker_info)
+    write_results.authorization_report(pdfw, no_authentication, brocker_info, auth_anyway, interface)
 
     # information disclosure results
-    write_results.information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, brocker_info)
+    write_results.information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, brocker_info, no_authentication)
     write_results.tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_readable, sys_topics_readable, text_message)
 
     # fingerprinting
@@ -456,8 +485,8 @@ if __name__== "__main__":
         write_results.sniffing_report(pdfw, usernames, passwords, clientIds, listening_time, brocker_info)
 
     # brute force results
-    if brute_force_dec == True or brute_force_cannot_be_executed == True:
-        write_results.brute_force_report(pdfw, username, wordlist_path, password, no_pass)
+    if brute_force_dec == True and brute_force_cannot_be_executed == False:
+        write_results.brute_force_report(pdfw, username, wordlist_path, password, no_pass, brute_force_dec)
 
 
     # dos results

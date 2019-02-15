@@ -5,13 +5,16 @@ import pdf_wrapper as pdfw
 
 # Authorization mechanism section
 
-def authorization_report(pdfw, no_authentication, brocker_info):
+def authorization_report(pdfw, no_authentication, brocker_info, auth_anyway, interface):
     pdfw.add_paragraph("Authentication")
 
     # No authentication mechanism detected -> mitigations
     if no_authentication==True:
         pdfw.add_to_existing_paragraph("<b>[!] MQTTSA did not detect an authentication mechanism<b>")
         pdfw.add_to_existing_paragraph('The tool was able to connect to the broker without specifying any kind of credential information. This may cause remote attackers to successfully connect to the broker. It is strongly advised to support authentication via X.509 client certificates.')
+        
+        if auth_anyway==True:
+            pdfw.add_to_existing_paragraph('Moreover, it was able to intercept and use client credentials: please validate the brocker configuration.')
         
         # Mitigations
         pdfw.add_sub_paragraph("Suggested mitigations")
@@ -28,14 +31,19 @@ def authorization_report(pdfw, no_authentication, brocker_info):
     else:
         # Authentication mechanism detected
         pdfw.add_to_existing_paragraph("MQTTSA detected an authentication mechanism.")
-
+        if auth_anyway==True:
+            pdfw.add_to_existing_paragraph('<b>[!] However, it was able to intercept and use valid client credentials</b>.')
+        elif interface != None:
+            pdfw.add_to_existing_paragraph('<br>Try to listen on a network interface to assess the possibility to sniff credentials.')
+            
 # Information disclosure section
 
-def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, brocker_info):
+def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, brocker_info, no_authentication):
     pdfw.add_paragraph("Information disclosure")
-
+    
     # Description of the test
-    pdfw.add_to_existing_paragraph("MQTTSA waited for "+str(listening_time)+" seconds after having subscribed to the '#' and '$SYS/#' topics. By default, clients who subscribe to the '#' topic can read to all the messages exchanged between devices and the ones subscribed to '$SYS/#' can read all the messages which includes statistics of the broker. Remote attackers could obtain specific information about the version of the broker to carry on more specific attacks or read messages exchanged by clients. <br>")
+    if no_authentication:
+        pdfw.add_to_existing_paragraph("MQTTSA waited for "+str(listening_time)+" seconds after having subscribed to the '#' and '$SYS/#' topics. By default, clients who subscribe to the '#' topic can read to all the messages exchanged between devices and the ones subscribed to '$SYS/#' can read all the messages which includes statistics of the broker. Remote attackers could obtain specific information about the version of the broker to carry on more specific attacks or read messages exchanged by clients. <br>")
 
     # MQTTSA found readable topics -> mitigations
     if len(topics_readable)+len(sys_topics_readable)>0:
@@ -63,7 +71,7 @@ def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, li
 
         # MQTTSA did not found readable topics -> increase listening_time
     else:
-        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA was not able to intercept messages exchanged by clients. Try to perform the assessment again, increasing the 'listening_time' parameter</b>")
+        pdfw.add_to_existing_paragraph("MQTTSA was not able to intercept messages exchanged by clients.<br>Try to perform the assessment again, increasing the 'listening_time' parameter.")
 
 # Tampering data section
 
@@ -72,7 +80,7 @@ def tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_rea
 
     # MQTTSA found readable topics -> check for writable topics
     if len(topics_readable)+len(sys_topics_readable)>0:
-        pdfw.add_to_existing_paragraph("After having successfully intercepted some messages, MQTTSA automatically created a new message (having as a payload the string '"+str(text_message)+"') and send it to every topic it was able to intercept. Remote attackers could exploit it to write in specific topics pretending to be a client (by his ID); e.g., send tampered measures to a sensor. <br>")
+        pdfw.add_to_existing_paragraph("After having successfully intercepted some messages, MQTTSA automatically created a new message (having as a payload the string '"+str(text_message)+"') and attempted sending it to every topic it was able to intercept. Remote attackers could exploit it to write in specific topics pretending to be a client (by his ID); e.g., send tampered measures to a sensor. <br>")
 
         # MQTTSA found writable topics -> Suggestions as in information disclosure
         if len(sys_topics_writable)+len(topics_writable)>0:
@@ -87,7 +95,7 @@ def tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_rea
 
     # MQTTSA did not found readable topics -> increase listening_time
     else:
-        pdfw.add_to_existing_paragraph("<b>[!] Since MQTTSA was not able to intercept any message, this vulnerability was not tested. Try to perform the assessment again, increasing the 'listening_time' parameter.</b>")
+        pdfw.add_to_existing_paragraph("Since MQTTSA was not able to intercept any message, this vulnerability was not tested.<br>Try to perform the assessment again, increasing the 'listening_time' parameter.</b>")
     
 # Fingerprinting
 
@@ -161,13 +169,13 @@ def sniffing_report(pdfw, usernames, passwords, clientids, listening_time, brock
     # MQTTSA found credential information -> mitigations
     if len(usernames)+len(passwords)+len(clientids)>0:
         pdfw.add_to_existing_paragraph("<b>[!] MQTTSA was able to intercept credential information.<b>") 
-        pdfw.add_to_existing_paragraph(str(len(usernames))+" usernames obtained: "+str(usernames))
-        pdfw.add_to_existing_paragraph(str(len(passwords))+" passwords obtained: "+str(passwords))
-        pdfw.add_to_existing_paragraph(str(len(clientids))+" client-ids obtained: "+str(clientids))
+        pdfw.add_to_existing_paragraph(str(len(usernames))+" usernames obtained: "+', '.join(usernames)+ ".")
+        pdfw.add_to_existing_paragraph(str(len(passwords))+" passwords obtained: "+', '.join(passwords)+ ".")
+        pdfw.add_to_existing_paragraph(str(len(clientids))+" client-ids obtained: "+', '.join(clientids)+ ".")
 
         # Mitigations
         pdfw.add_sub_paragraph("<br>Suggested mitigations")
-        pdfw.add_to_existing_paragraph('We strongly suggest to enforce TLS in MQTT (secure-MQTT). TLS provides a secure communication channel between clients and server: assuming the correct configuration of TLS (secure version and cipher suites=, the content of the communication cannot be read or altered by third parties.')
+        pdfw.add_to_existing_paragraph('We strongly suggest to enforce TLS in MQTT (secure-MQTT). TLS provides a secure communication channel between clients and server: assuming the correct configuration of TLS (secure version and cipher suites), the content of the communication cannot be read or altered by third parties.')
            
         if brocker_info != None:
             if "mosquitto" in brocker_info:
@@ -183,7 +191,7 @@ def sniffing_report(pdfw, usernames, passwords, clientids, listening_time, brock
 
     # MQTTSA was unable to find credential information
     else:
-        pdfw.add_to_existing_paragraph("<b>MQTTSA was not able to intercept any credential information.<b>") 
+        pdfw.add_to_existing_paragraph("MQTTSA was not able to intercept any credential information.") 
 
 # Brute force section
 
@@ -232,24 +240,24 @@ def dos_report(pdfw, dos_connections, brocker_info):
     
     # Description
     if dos_connections != None:
-        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA opened "+str(dos_connections)+" connections to stress the broker and test how it will react in case of Denial of Service.<b>")
+        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA opened "+str(dos_connections)+" connections to stress the broker and test how it will react in case of Denial of Service.<b>") 
+        
+        pdfw.add_to_existing_paragraph("The tool is not able to determine if the test resulted in the loss of connection/reconnection of other clients; thus the user should check the logfile of the broker or any reconnction attempt from clients.")
+        pdfw.add_to_existing_paragraph("In case the test did not result in disconnections or delays, the test can be performed again increasing the <i>dos_connection</i> value.")
+        
+        # Mitigations 
+        pdfw.add_sub_paragraph("<br>Suggested mitigations")
+        pdfw.add_to_existing_paragraph('In case of MQTT environments with limited bandwidth capacity, it is recommended to prevent Denial of Service attacks by: implementing a firewall with appropriate rules, use a load balancer, limit the number of clients and packet dimension.')
+        
+        if brocker_info != None:
+            if "mosquitto" in brocker_info:
+                pdfw.add_to_existing_paragraph('In Mosquitto it is possible to set the <i>persistent_client_expiration</i>, <i>message_size_limit</i> and <i>max_connections</i> parameters in the configuration file (eg. to, respecively, 1h, 5120 and 5). Refer to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> for details')
+        
+        pdfw.add_to_existing_paragraph('Additional information here:')
+        pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems">MQTT Security Fundamentals: Securing MQTT Systems</a>')
+        pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Password_strength">Mosquitto documentation: message_size_limit and max_connection</a>')
     else:
-        pdfw.add_to_existing_paragraph("<b>MQTTSA was not able to opened any connection to perform Denial of Service attacks towards the broker.<b>")    
-    
-    pdfw.add_to_existing_paragraph("The tool is not able to determine if the test resulted in the loss of connection/reconnection of other clients; thus the user should check the logfile of the broker or any reconnction attempt from clients.")
-    pdfw.add_to_existing_paragraph("In case the test did not result in disconnections or delays, the test can be performed again increasing the <i>dos_connection</i> value.")
-    
-    # Mitigations 
-    pdfw.add_sub_paragraph("<br>Suggested mitigations")
-    pdfw.add_to_existing_paragraph('In case of MQTT environments with limited bandwidth capacity, it is recommended to prevent Denial of Service attacks by: implementing a firewall with appropriate rules, use a load balancer, limit the number of clients and packet dimension.')
-    
-    if brocker_info != None:
-        if "mosquitto" in brocker_info:
-            pdfw.add_to_existing_paragraph('In Mosquitto it is possible to set the <i>persistent_client_expiration</i>, <i>message_size_limit</i> and <i>max_connections</i> parameters in the configuration file (eg. to, respecively, 1h, 5120 and 5). Refer to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> for details')
-    
-    pdfw.add_to_existing_paragraph('Additional information here:')
-    pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems">MQTT Security Fundamentals: Securing MQTT Systems</a>')
-    pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Password_strength">Mosquitto documentation: message_size_limit and max_connection</a>')
+        pdfw.add_to_existing_paragraph("MQTTSA was not configured or able to perform a Denial of Service attack on the broker.")
 
 # Malformed data section
 
