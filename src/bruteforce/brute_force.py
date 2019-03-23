@@ -7,8 +7,8 @@ import sys
 # callback function for the connect request
 def on_connect(client, userdata, flags, rc):
 	if rc==0:
-		global connected
-		global password
+		# global connected
+		# global password
                 connected = True
 
 """Performs the brute force attack
@@ -24,8 +24,8 @@ Returns:
                            passwod worked or not
 """
 def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert, client_key):
-	global connected
-	global password
+	# global connected
+	# global password
 	connected = False
         # open the wordlist file
 	with open(wordlist_path) as f:
@@ -38,7 +38,7 @@ def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert,
 			client = mqtt.Client()
 			client.on_connect = on_connect
 			client.username_pw_set(username, password)
-			print 'trying: '+username + ', '+ password
+			print('trying: '+username + ', '+ password)
 
                         # if the tls_cert value is different from None, try to connect over TLS
 			if tls_cert != None:

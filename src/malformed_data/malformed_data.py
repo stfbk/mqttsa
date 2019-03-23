@@ -58,9 +58,9 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             client.reinitialise(client_id=value, clean_session=True, userdata=None)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
-			client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
-					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-			client.tls_insecure_set(True)
+                client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
+                               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
             client.publish(topic, "test")
             # if successful we add the value to the 'mal' object as a value which didn't generate any error
@@ -79,9 +79,9 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             client.reinitialise(clean_session=value, userdata=None)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
-			client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
-					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-			client.tls_insecure_set(True)
+                client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
+                               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
             client.publish(topic, "test")
             # if successful we add the value to the 'mal' object as a value which didn't generate any error
@@ -100,9 +100,9 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             client.reinitialise(clean_session=True, userdata=value)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
-			client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
-					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-			client.tls_insecure_set(True)
+                client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
+                               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
             client.publish(topic, "test")
             # if successful we add the value to the 'mal' object as a value which didn't generate any error
@@ -121,9 +121,9 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             client.reinitialise(clean_session=True, userdata=None)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
-			client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
-					tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-			client.tls_insecure_set(True)
+                client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
+                               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                client.tls_insecure_set(True)
             client.connect(host, port, keepalive=value, bind_address="")
             client.publish(topic, "test")
             # if successful we add the value to the 'mal' object as a value which didn't generate any error

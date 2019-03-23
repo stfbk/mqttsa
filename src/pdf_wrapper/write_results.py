@@ -20,7 +20,7 @@ def authorization_report(pdfw, no_authentication, brocker_info, auth_anyway, int
         pdfw.add_sub_paragraph("Suggested mitigations")
         
         if brocker_info != None:
-            if "mosquitto" in brocker_info:
+            if b"mosquitto" in brocker_info:
                 pdfw.add_to_existing_paragraph('Please follow those <a href="https://primalcortex.wordpress.com/2016/11/08/mqtt-mosquitto-broker-client-authentication-and-client-certificates/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a>. An excerpt of a configuration file is provided below:<font size=6><p>     listener 8883<br/>     cafile /etc/mosquitto/certs/ca.crt<br/>     certfile /etc/mosquitto/certs/hostname.crt<br/>     keyfile /etc/mosquitto/certs/hostname.key<br/>     require_certificate true<br/>     use_identity_as_username true<br/>     crlfile /etc/mosquitto/certs/ca.crl</p></font>')
         else:
             pdfw.add_to_existing_paragraph('Refer here for additional informations')
@@ -59,7 +59,7 @@ def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, li
         #Unfortunately, the current version of MQTT support authorization only broker-side.')
         
         if brocker_info != None:
-            if "mosquitto" in brocker_info:
+            if b"mosquitto" in brocker_info:
                 pdfw.add_to_existing_paragraph('If restricting access via ACLs, please follow those <a href="http://www.steves-internet-guide.com/topic-restriction-mosquitto-configuration/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a>. For instance, integrate the <i>acl_file</i> parameter (<i>acl_file /mosquitto/config/acls</i>) and restict a client to interact only on topics with his clientname as prefix (ACL <i>pattern readwrite topic/%c/#</i>)')
         else: 
             pdfw.add_to_existing_paragraph('Additional information here:')
@@ -110,47 +110,47 @@ def fingerprinting_report(pdfw, brocker_info):
         
     # Found informations regarding brocker type and version -> check CVEs
     pdfw.add_to_existing_paragraph("MQTTSA detected the following MQTT brocker: "+str(brocker_info)+". ")
-    if "mosquitto" in brocker_info:
-        if not brockers ["mosquitto"] in brocker_info:
+    if b"mosquitto" in brocker_info:
+        if not brockers["mosquitto"].encode() in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Mosquitto version is not updated</b>: please refer to the last <a href="https://mosquitto.org/ChangeLog.txt">Change log</a> for bugs and security issues.')
         else:
             pdfw.add_to_existing_paragraph('Mosquitto version IO is up-to-date.')
-    elif "hivemq" in brocker_info:
+    elif b"hivemq" in brocker_info:
         if not brockers ["hivemq"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]HiveMQ version is not updated</b>: please refer to the last <a href="https://www.hivemq.com/changelog/">Change log</a> for bugs and security issues.')
         else:
             pdfw.add_to_existing_paragraph('HiveMQ version IO is up-to-date.')
-    elif "vernemq" in brocker_info:
+    elif b"vernemq" in brocker_info:
         if not brockers ["vernemq"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]VerneMQ version is not updated</b>: please refer to the last <a href="https://github.com/vernemq/vernemq/blob/master/changelog.md">Change log</a> for bugs and security issues.')
         else:
             pdfw.add_to_existing_paragraph('VerneMQ version IO is up-to-date.')
-    elif "emq" in brocker_info:
+    elif b"emq" in brocker_info:
         if not brockers ["emqx"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]EMQ version is not updated</b>: please refer to the last <a href="http://emqtt.io/changelogs">Change log</a> for bugs and security issues.')
         else:
             pdfw.add_to_existing_paragraph('EMQ version IO is up-to-date.')
-    elif "adafruit" in brocker_info:
+    elif b"adafruit" in brocker_info:
         if not brockers ["adafruit"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Adafruit IO version is not updated</b>: please refer to the last <a href="https://io.adafruit.com/blog/">Change log</a> for bugs and security issues.')
         else:
             pdfw.add_to_existing_paragraph('Adafruit IO is up-to-date.')
-    elif "machine_head" in brocker_info:
+    elif b"machine_head" in brocker_info:
         if not brockers ["machine_head"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Machine Head version is not updated</b>: please refer to the last <a href="https://github.com/clojurewerkz/machine_head/blob/master/ChangeLog.md">Change log</a> for bugs and security issues.')
         else:
             pdfw.add_to_existing_paragraph('Machine Head is up-to-date.')
-    elif "moquette" in brocker_info:
+    elif b"moquette" in brocker_info:
         if not brockers ["moquette"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Moquette version is not updated</b>: please refer to the last <a href="https://github.com/andsel/moquette/blob/master/ChangeLog.txt">Change log</a> for bugs and security issues.')
         else:
             pdfw.add_to_existing_paragraph('Moquette is up-to-date.')
-    elif "solace" in brocker_info:
+    elif b"solace" in brocker_info:
         if not brockers ["solace"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Solace PubSub+ version is not updated</b>: please refer to the last <a href="https://products.solace.com/download/PUBSUB_STAND_RN">Release notes</a> for bugs and security issues.')
         else:
             pdfw.add_to_existing_paragraph('Solace PubSub+ is up-to-date.')
-    elif "thingstream" in brocker_info:
+    elif b"thingstream" in brocker_info:
         if not brockers ["thingstream"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Thingstream version is not updated</b>: please refer to the last <a href="https://sites.google.com/thingstream.io/docs/release-notes">Release notes</a> for bugs and security issues.')
         else:
@@ -313,6 +313,6 @@ if __name__== "__main__":
         authorization_repo(pdfw, False)
         information_disclosure_report(pdfw, [], [], 60)
     else:
-        print "Please insert 'y' or 'n' only!"
+        print("Please insert 'y' or 'n' only!")
     pdfw.output_pdf()
 

@@ -26,9 +26,8 @@ def broker_dos(host, port, connections, topic="", tls_cert=None, client_cert=Non
         try:
             # if the path to a CA certificate is available, we try to connect over TLS
             if tls_cert != None:
-		client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE,
-				tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
-		client.tls_insecure_set(True)
+                client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
         except:
             pass
@@ -47,7 +46,7 @@ def threaded_broker_dos(host, port, threads, connections, topic="", tls_cert=Non
             cleanup_stop_thread()
             sys.exit()
         except Exception as e:
-            print "error creating thread: " + str(e)
+            print("error creating thread: " + str(e))
     for t in ts:
         # start all the threads
         t.start()
@@ -68,7 +67,7 @@ if __name__ == "__main__":
     threads = int(threads)
     port = int(port)
     if tls_cert == "":
-	tls_cert = None
+        tls_cert = None
     if client_cert == "":
         client_cert = None
-    print threaded_broker_dos(host, port, threads=threads, connections=500, topic="Topic1", tls_cert=tls_cert)
+    print(threaded_broker_dos(host, port, threads=threads, connections=500, topic="Topic1", tls_cert=tls_cert))
