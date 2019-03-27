@@ -78,9 +78,9 @@ def on_message(client, userdata, message):
     if '$SYS' in str(message.topic):
         sys_topics_readable.add(str(message.topic.replace('#','')))
         if(connected_clients == None and str(message.topic) == '$SYS/broker/clients/connected'):
-            connected_clients = message.payload
+            connected_clients = message.payload.decode('utf-8')
         if(brocker_info == None and str(message.topic) == '$SYS/broker/version'):
-            brocker_info = message.payload
+            brocker_info = message.payload.decode('utf-8')
     else:
         # add topic in the set of topic
         topics_readable.add(str(message.topic.replace('#','')))
@@ -101,6 +101,8 @@ def on_message(client, userdata, message):
     pattern_passw = re.compile("(pass|pss|key)")
     # Regex for "device/iot/board"
     pattern_iot = re.compile("(device|iot|board)")
+    # Regex from MQTT PWN
+    pattern_iot_2 = re.compile("(openHAB|HomeAssistant|Domoticz|HomeBridge|HomeSeer|SmartThings|SonWEB|Yeti|NodeRed|harmony|iobroker|zwave|sonoff|itead|owntracks)")
     # Regex for "message/msg"
     pattern_msg = re.compile("(message|msg)")
     # Regex for "online/offline/state/statu"
@@ -112,76 +114,84 @@ def on_message(client, userdata, message):
     # Regex for phone numbers with country codes
     pattern_endpoint = re.compile("(\+263[0-9]{5,}|\+260[0-9]{5,}|\+967[0-9]{5,}|\+212[0-9]{5,}|\+681[0-9]{5,}|\+1-340[0-9]{5,}|\+84[0-9]{5,}|\+58[0-9]{5,}|\+379[0-9]{5,}|\+678[0-9]{5,}|\+998[0-9]{5,}|\+1[0-9]{5,}|\+598[0-9]{5,}|\+380[0-9]{5,}|\+44[0-9]{5,}|\+256[0-9]{5,}|\+971[0-9]{5,}|\+688[0-9]{5,}|\+1-649[0-9]{5,}|\+993[0-9]{5,}|\+90[0-9]{5,}|\+216[0-9]{5,}|\+1-868[0-9]{5,}|\+676[0-9]{5,}|\+690[0-9]{5,}|\+228[0-9]{5,}|\+66[0-9]{5,}|\+255[0-9]{5,}|\+992[0-9]{5,}|\+886[0-9]{5,}|\+963[0-9]{5,}|\+41[0-9]{5,}|\+46[0-9]{5,}|\+268[0-9]{5,}|\+47[0-9]{5,}|\+597[0-9]{5,}|\+249[0-9]{5,}|\+1-784[0-9]{5,}|\+508[0-9]{5,}|\+590[0-9]{5,}|\+1-758[0-9]{5,}|\+1-869[0-9]{5,}|\+290[0-9]{5,}|\+94[0-9]{5,}|\+34[0-9]{5,}|\+211[0-9]{5,}|\+82[0-9]{5,}|\+27[0-9]{5,}|\+252[0-9]{5,}|\+677[0-9]{5,}|\+386[0-9]{5,}|\+421[0-9]{5,}|\+1-721[0-9]{5,}|\+65[0-9]{5,}|\+232[0-9]{5,}|\+248[0-9]{5,}|\+381[0-9]{5,}|\+221[0-9]{5,}|\+966[0-9]{5,}|\+239[0-9]{5,}|\+378[0-9]{5,}|\+685[0-9]{5,}|\+590[0-9]{5,}|\+250[0-9]{5,}|\+7[0-9]{5,}|\+40[0-9]{5,}|\+262[0-9]{5,}|\+974[0-9]{5,}|\+1-787[0-9]{5,}|1-939[0-9]{5,}|\+351[0-9]{5,}|\+48[0-9]{5,}|\+64[0-9]{5,}|\+63[0-9]{5,}|\+51[0-9]{5,}|\+595[0-9]{5,}|\+675[0-9]{5,}|\+507[0-9]{5,}|\+970[0-9]{5,}|\+680[0-9]{5,}|\+92[0-9]{5,}|\+968[0-9]{5,}|\+47[0-9]{5,}|\+850[0-9]{5,}|\+1-670[0-9]{5,}|\+683[0-9]{5,}|\+234[0-9]{5,}|\+227[0-9]{5,}|\+505[0-9]{5,}|\+64[0-9]{5,}|\+687[0-9]{5,}|\+599[0-9]{5,}|\+31[0-9]{5,}|\+977[0-9]{5,}|\+674[0-9]{5,}|\+264[0-9]{5,}|\+258[0-9]{5,}|\+212[0-9]{5,}|\+1-664[0-9]{5,}|\+382[0-9]{5,}|\+976[0-9]{5,}|\+377[0-9]{5,}|\+373[0-9]{5,}|\+691[0-9]{5,}|\+52[0-9]{5,}|\+262[0-9]{5,}|\+230[0-9]{5,}|\+222[0-9]{5,}|\+692[0-9]{5,}|\+356[0-9]{5,}|\+223[0-9]{5,}|\+960[0-9]{5,}|\+60[0-9]{5,}|\+265[0-9]{5,}|\+261[0-9]{5,}|\+389[0-9]{5,}|\+853[0-9]{5,}|\+352[0-9]{5,}|\+370[0-9]{5,}|\+423[0-9]{5,}|\+218[0-9]{5,}|\+231[0-9]{5,}|\+266[0-9]{5,}|\+961[0-9]{5,}|\+371[0-9]{5,}|\+856[0-9]{5,}|\+996[0-9]{5,}|\+965[0-9]{5,}|\+383[0-9]{5,}|\+686[0-9]{5,}|\+254[0-9]{5,}|\+7[0-9]{5,}|\+962[0-9]{5,}|\+44-1534[0-9]{5,}|\+81[0-9]{5,}|\+1-876[0-9]{5,}|\+225[0-9]{5,}|\+39[0-9]{5,}|\+972[0-9]{5,}|\+44-1624[0-9]{5,}|\+353[0-9]{5,}|\+964[0-9]{5,}|\+98[0-9]{5,}|\+62[0-9]{5,}|\+91[0-9]{5,}|\+354[0-9]{5,}|\+36[0-9]{5,}|\+852[0-9]{5,}|\+504[0-9]{5,}|\+509[0-9]{5,}|\+592[0-9]{5,}|\+245[0-9]{5,}|\+224[0-9]{5,}|\+44-1481[0-9]{5,}|\+502[0-9]{5,}|\+1-671[0-9]{5,}|\+1-473[0-9]{5,}|\+299[0-9]{5,}|\+30[0-9]{5,}|\+350[0-9]{5,}|\+233[0-9]{5,}|\+49[0-9]{5,}|\+995[0-9]{5,}|\+220[0-9]{5,}|\+241[0-9]{5,}|\+689[0-9]{5,}|\+33[0-9]{5,}|\+358[0-9]{5,}|\+679[0-9]{5,}|\+298[0-9]{5,}|\+500[0-9]{5,}|\+251[0-9]{5,}|\+372[0-9]{5,}|\+291[0-9]{5,}|\+240[0-9]{5,}|\+503[0-9]{5,}|\+20[0-9]{5,}|\+593[0-9]{5,}|\+670[0-9]{5,}|\+1-809[0-9]{5,}|1-829[0-9]{5,}|1-849[0-9]{5,}|\+1-767[0-9]{5,}|\+253[0-9]{5,}|\+45[0-9]{5,}|\+420[0-9]{5,}|\+357[0-9]{5,}|\+599[0-9]{5,}|\+53[0-9]{5,}|\+385[0-9]{5,}|\+506[0-9]{5,}|\+682[0-9]{5,}|\+243[0-9]{5,}|\+242[0-9]{5,}|\+269[0-9]{5,}|\+57[0-9]{5,}|\+61[0-9]{5,}|\+61[0-9]{5,}|\+86[0-9]{5,}|\+56[0-9]{5,}|\+235[0-9]{5,}|\+236[0-9]{5,}|\+1-345[0-9]{5,}|\+238[0-9]{5,}|\+1[0-9]{5,}|\+237[0-9]{5,}|\+855[0-9]{5,}|\+257[0-9]{5,}|\+95[0-9]{5,}|\+226[0-9]{5,}|\+359[0-9]{5,}|\+673[0-9]{5,}|\+1-284[0-9]{5,}|\+246[0-9]{5,}|\+55[0-9]{5,}|\+267[0-9]{5,}|\+387[0-9]{5,}|\+591[0-9]{5,}|\+975[0-9]{5,}|\+1-441[0-9]{5,}|\+229[0-9]{5,}|\+501[0-9]{5,}|\+32[0-9]{5,}|\+375[0-9]{5,}|\+1-246[0-9]{5,}|\+880[0-9]{5,}|\+973[0-9]{5,}|\+1-242[0-9]{5,}|\+994[0-9]{5,}|\+43[0-9]{5,}|\+61[0-9]{5,}|\+297[0-9]{5,}|\+374[0-9]{5,}|\+54[0-9]{5,}|\+1-268[0-9]{5,}|\+672[0-9]{5,}|\+1-264[0-9]{5,}|\+244[0-9]{5,}|\+376[0-9]{5,}|\+1-684[0-9]{5,}|\+213[0-9]{5,}|\+355[0-9]{5,}|\+93[0-9]{5,})")
     # Regex for mastercard/visa/american express numbers
-    # pattern_cards = re.compile("(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[0-9]{12} | ([4]\d{3}[\s]\d{4}[\s]\d{4}[\s]\d{4}|[4]\d{3}[-]\d{4}[-]\d{4}[-]\d{4}|[4]\d{3}[.]\d{4}[.]\d{4}[.]\d{4}|[4]\d{3}\d{4}\d{4}\d{4}) | 3[47][0-9]{13})")
+    pattern_cards = re.compile("(^4[0-9]{12}(?:[0-9]{3})?$|^(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[0-9]{12}$|^3[47][0-9]{13}$|^3(?:0[0-5]|[68][0-9])[0-9]{11}$|^6(?:011|5[0-9]{2})[0-9]{12}$)")
     # Regex for directories
     pattern_dir = re.compile("((\.)*((\\\\)+[A-Za-z0-9_\s]{1,})+(\.[A-Za-z0-9_\s]{1,})?)|((\.)*((\/)+[A-Za-z0-9_\s]{1,})+(\.[A-Za-z0-9_\s]{1,})?)")
     # Regex for "lat/long/loc"
-    pattern_lat = re.compile("(lat|long|loc)")
+    pattern_gps = re.compile("(lat|long|loc)")
 
     pattern_test = re.compile("^([A-Z][0-9]+)+$")
 
     # print("REGEX ARE WORKING!") 
     if (pattern_test.match(msg_payload)):
-        f=open("test.txt","a+")
+        f=open("messages/test.txt","a+")
         f.write(msg_payload)
         f.close()
     if (pattern_domain_names.match(msg_payload)):
-        f=open("domain.txt","a+")
+        f=open("messages/domains.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
     if (pattern_email.match(msg_payload)):
-        f=open("email.txt","a+")
+        f=open("messages/emails.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
     if (pattern_passw.match(msg_payload)):
-        f=open("passw.txt","a+")
+        f=open("messages/passwords.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
     if (pattern_iot.match(msg_payload)):
-        f=open("iot.txt","a+")
+        f=open("messages/iot_keywords.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
+    if (pattern_iot_2.match(message.topic)):
+        f=open("messages/iot_keywords.txt","a+")
+        f.write(msg_payload+"\n")
+        f.close()        
     if (pattern_msg.match(msg_payload)):
-        f=open("msg.txt","a+")
+        f=open("messages/message_keywords.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
     if (pattern_status.match(msg_payload)):
-        f=open("status.txt","a+")
+        f=open("messages/status_keywords.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
     if (pattern_endpoint.match(msg_payload)):
-        f=open("endpoint.txt","a+")
+        f=open("messages/endpoint_keywords.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
     if (pattern_dates.match(msg_payload)):
-        f=open("dates.txt","a+")
+        f=open("messages/dates.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
     if (pattern_phones.match(msg_payload)):
-        f=open("phones.txt","a+")
+        f=open("messages/phone_numbers.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
-    # if (pattern_cards.match(msg_payload)):
-        # f=open("cards.txt","a+")
-        # f.write(msg_payload+"\n")
-        # f.close()
+    if (pattern_cards.match(msg_payload)):
+        f=open("messages/cards.txt","a+")
+        f.write(msg_payload+"\n")
+        f.close()
     if (pattern_dir.match(msg_payload)):
-        f=open("dir.txt","a+")
+        f=open("messages/directories.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
-    if (pattern_lat.match(msg_payload)):
-        f=open("lat.txt","a+")
+    if (pattern_gps.match(msg_payload)):
+        f=open("messages/gps_keywords.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
     if (pattern_mac_address.match(msg_payload)):
-        f=open("mac.txt","a+")
+        f=open("messages/mac_addresses.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
     if (pattern_ipv4.match(msg_payload)):
-        f=open("ipv4.txt","a+")
+        f=open("messages/ipv4_addresses.txt","a+")
         f.write(msg_payload+"\n")
         f.close()
 
+    # Store intercepted messages
+    f=open("messages/raw_messages","a+")
+        f.write(msg_payload+"\n")
+        f.close()
 
     # If we found the test message, we can write, so add to writable list
     try:
@@ -317,11 +327,7 @@ if __name__== "__main__":
     client.on_message = on_message
 
     if tls_cert != None:
-        if hasattr(ssl, "PROTOCOL_TLS"):
-            tls_prot_v = ssl.PROTOCOL_TLS
-        else:
-            tls_prot_v = ssl.PROTOCOL_TLSv1
-        client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
+        client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
         client.tls_insecure_set(True)
 
     # connect to the specified broker
@@ -372,11 +378,7 @@ if __name__== "__main__":
 
             # if the path to a CA certificate is available, we try to connect over TLS
             if tls_cert != None:
-                if hasattr(ssl, "PROTOCOL_TLS"):
-                    tls_prot_v = ssl.PROTOCOL_TLS
-                else:
-                    tls_prot_v = ssl.PROTOCOL_TLSv1
-                client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
+                client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
 
             client.connect(broker_ip,port)
@@ -414,11 +416,7 @@ if __name__== "__main__":
 
         # if the path to a CA certificate is available, we try to connect over TLS
         if tls_cert != None:
-            if hasattr(ssl, "PROTOCOL_TLS"):
-                tls_prot_v = ssl.PROTOCOL_TLS
-            else:
-                tls_prot_v = ssl.PROTOCOL_TLSv1
-            client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
+            client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
             client.tls_insecure_set(True)
 
         # connect to the specified broker
@@ -444,11 +442,7 @@ if __name__== "__main__":
 
                 # if the path to a CA certificate is available, we try to connect over TLS
                 if tls_cert != None:
-                    if hasattr(ssl, "PROTOCOL_TLS"):
-                        tls_prot_v = ssl.PROTOCOL_TLS
-                    else:
-                        tls_prot_v = ssl.PROTOCOL_TLSv1
-                    client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
+                    client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                     client.tls_insecure_set(True)
 
                 # connect to the specified broker
@@ -471,12 +465,9 @@ if __name__== "__main__":
 
             # if the path to a CA certificate is available, we try to connect over TLS
             if tls_cert != None:
-                if hasattr(ssl, "PROTOCOL_TLS"):
-                    tls_prot_v = ssl.PROTOCOL_TLS
-                else:
-                    tls_prot_v = ssl.PROTOCOL_TLSv1
-                client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_prot_v, ciphers=None)
+                client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
+                
             client.connect(broker_ip,port)
             client.loop_start()
             # Subscribe to all
