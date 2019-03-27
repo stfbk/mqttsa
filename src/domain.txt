@@ -1,5 +1,0 @@
-msg.payload:number
-https://www.google.com/maps/@33.859707,35.583996,18.75z
-https://www.google.com/maps/@33.859707,35.583996,18.75z
-https://www.google.com/maps/@33.859707,35.583996,18.75z
-https://www.google.com/maps/@33.859707,35.583996,18.75z
