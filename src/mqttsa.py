@@ -452,7 +452,7 @@ if __name__== "__main__":
         if not no_pass:
             print('\nPerforming brute force...\n')
             # perform brute force
-            bruteforce_results = bruteforce.brute_force(broker_ip,port,username,wordlist_path, tls_cert, client_cert)
+            bruteforce_results = bruteforce.brute_force(broker_ip,port,username,wordlist_path, tls_cert, client_cert, client_key)
                 
             if bruteforce_results[0]:
                 # state 2 -> username, password

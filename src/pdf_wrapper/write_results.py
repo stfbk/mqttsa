@@ -195,11 +195,11 @@ def sniffing_report(pdfw, usernames, passwords, clientids, listening_time, brock
 
 # Brute force section
 
-def brute_force_report(pdfw, username, wordlist, password, no_pass):
+def brute_force_report(pdfw, username, wordlist, password, no_pass, brute_force_dec):
     pdfw.add_paragraph("Brute force")
     # NEW FLAG NEEDED FOR WHEN CANNOT BE PERFORMED 
     # Brute force cannot be performed
-    if no_pass == True:
+    if brute_force_dec == True:
         pdfw.add_to_existing_paragraph("<b> The brute force test can not be performed. Authentication mechanism may not use username/password or not be enforced at all, check the Authentication section.<b>")
     
     # Brute force can be performed
