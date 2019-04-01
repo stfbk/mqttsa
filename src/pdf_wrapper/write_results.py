@@ -282,37 +282,4 @@ def malformed_data_report(pdfw, mal_data, topic):
         #ee = ee[:-2]
         pdfw.add_to_existing_paragraph("<br>"+error_values)
 
-# For testing purposes
-if __name__== "__main__":
-    pdfw.init()
-    all_attacks = raw_input("Simulate all attacks? [y/n]: ")
-    if all_attacks == "y":
-        authorization_report(pdfw, True)
-        authorization_report(pdfw, False)
-        information_disclosure_report(pdfw, ['topic1', 'topic2'], ['sys1', 'sys2'], 60)
-
-        information_disclosure_report(pdfw, [], [], 60)
-        tampering_data_report(pdfw, [], [], [], [], 'ciao')
-        tampering_data_report(pdfw,[],[], ['yo'],['yo'],'ciao')
-        tampering_data_report(pdfw, ['aa'],['a'],['yo'],['test'],'ciao')
-        sniffing_report(pdfw,['gigino'],['ciao'],['s'],90)
-        sniffing_report(pdfw,[],[],['s'],90)
-        sniffing_report(pdfw,[],[],[],90)
-        #mal = Malformed("CONNECT", "client-id")
-        #mal.add_success("123")
-        #err = MyError("{}", "cannot use such value as a client-id")
-        #mal.add_error(err)
-        #malformed_data_report(pdfw, [mal], "Topic")
-        brute_force_report(pdfw, 'user', 'path', 'pass', False)
-        brute_force_report(pdfw, 'user', 'path', 'pass', True)
-        brute_force_report(pdfw,None,None ,None , False)
-        brute_force_report(pdfw,None ,None ,None , True)
-        dos_report(pdfw,None)
-        dos_report(pdfw,10)
-    elif all_attacks == "n":
-        authorization_repo(pdfw, False)
-        information_disclosure_report(pdfw, [], [], 60)
-    else:
-        print("Please insert 'y' or 'n' only!")
-    pdfw.output_pdf()
-
+    pdfw.add_to_existing_paragraph("In case the report refer to values like '$' or '$topic', it might be possible to be affected from a bug included on an old version of Mosquitto. We strongly suggest to update the Mosquitto version to the last release to avoid having these issues.")
