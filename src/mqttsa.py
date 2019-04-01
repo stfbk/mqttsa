@@ -198,6 +198,7 @@ if __name__== "__main__":
     # Password is required for login
     no_pass = False
     bruteforce_results = [False]
+    username_bug = False
     brute_force_cannot_be_executed = False
     password = None
     auth_anyway = False
@@ -334,6 +335,7 @@ if __name__== "__main__":
             print('\nPerforming brute force...\n')
             # perform brute force
             bruteforce_results = bruteforce.brute_force(broker_ip,port,username,wordlist_path, tls_cert, client_cert)
+            username_bug = bruteforce.username_bug(broker_ip,port, tls_cert, client_cert)
                 
             if bruteforce_results[0]:
                 # state 2 -> username, password
@@ -537,5 +539,7 @@ if __name__== "__main__":
             print('     + password not required!')
         if bruteforce_results[0]:
             print('     + password found:   '+str(bruteforce_results[1]))
+        if username_bug:
+            print('     + ACL bypassed using as username:   "#"')
 
     print('**************************************************')
