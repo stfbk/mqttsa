@@ -26,7 +26,7 @@ def broker_dos(host, port, connections, topic="", tls_cert=None, client_cert=Non
         try:
             # if the path to a CA certificate is available, we try to connect over TLS
             if tls_cert != None:
-                client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                client.tls_set(tls_cert, client_cert, None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
         except:

@@ -59,7 +59,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
                 client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
-                               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                               tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
             client.publish(topic, "test")
@@ -80,7 +80,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
                 client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
-                               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                               tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
             client.publish(topic, "test")
@@ -101,7 +101,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
                 client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
-                               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                               tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
             client.connect(host, port, keepalive=60, bind_address="")
             client.publish(topic, "test")
@@ -122,7 +122,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
                 client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
-                               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                               tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
             client.connect(host, port, keepalive=value, bind_address="")
             client.publish(topic, "test")
@@ -140,11 +140,12 @@ def test_publish_packet(host, port, topic, tls_cert, client_cert, client_key, cr
     # if the path to the CA certificate it will try to connect over TLS
     if tls_cert != None:
             client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
-                            tls_version=ssl.PROTOCOL_TLSv1, ciphers=None)
+                            tls_version=ssl.PROTOCOL_TLS, ciphers=None)
             client.tls_insecure_set(True)
             
     if (len(credentials) !=0):
-            client.username_pw_set(credentials[0].username, credentials[0].password)
+            c = list(credentials)[0]
+            client.username_pw_set(c.username, c.password)
     
     client.connect(host, port, keepalive=60, bind_address="")
 

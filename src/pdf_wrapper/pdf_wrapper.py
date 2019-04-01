@@ -45,5 +45,5 @@ def add_to_existing_paragraph(msg):
 # generate the pdf using the HTML
 def output_pdf():
     global html
-    pdf.write_html(html)
+    pdf.write_html(html.encode('utf-8').decode('latin-1'))
     pdf.output("../report.pdf")

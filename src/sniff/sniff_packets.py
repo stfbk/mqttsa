@@ -154,9 +154,9 @@ def sniffing_attack(interface, listening_time, port):
 
 # used for running only this attack for testing purposes
 if __name__=="__main__":
-    inf=raw_input("Enter interface to sniff:")
-    time=raw_input("Enter number of seconds to sniff:")
-    port=raw_input("Enter the port (correctly decode MQTT messages):")
+    inf=input("Enter interface to sniff:")
+    time=input("Enter number of seconds to sniff:")
+    port=input("Enter the port (correctly decode MQTT messages):")
     cap = pyshark.LiveCapture(interface=inf, display_filter='mqtt', decode_as={"tcp.port=="+str(port)+"": "mqtt"})
     try:
         cap.apply_on_packets(print_info, timeout=float(time))
