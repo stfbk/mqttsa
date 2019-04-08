@@ -28,4 +28,4 @@ The attacks implemented are the following:
 
 # Requirements
 
-MQTTSA requires (e.g. via APT) the following packets: `python-pip libxml2-dev libxslt-dev python-dev tshark` -- to allow the execution as non-root user, select yes when prompted; run `make` to install additional requirements with `PIP` (from `requirements.txt`). If necessary, add the user to the wireshark group via `sudo adduser &USER wireshark`.
+MQTTSA requires (e.g. via APT) the following packets: `python-pip libxml2-dev libxslt-dev python-dev tshark` -- to allow the execution as non-root user, select yes when prompted; run `make` to install additional requirements with `PIP` (from `requirements.txt`). If necessary, add the user to the wireshark group via `sudo adduser $USER wireshark`.
