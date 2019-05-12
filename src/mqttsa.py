@@ -454,7 +454,7 @@ if __name__== "__main__":
             print('\nPerforming brute force...\n')
             # perform brute force
             bruteforce_results = bruteforce.brute_force(broker_ip,port,username,wordlist_path, tls_cert, client_cert,client_key)
-            username_bug = bruteforce.username_bug(broker_ip,port, tls_cert, client_cert)
+            username_bug = bruteforce.username_bug(broker_ip,port, tls_cert, client_cert, client_key)
             if bruteforce_results[0]:
                 # state 2 -> username, password
                 state = 2

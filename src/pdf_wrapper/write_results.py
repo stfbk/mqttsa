@@ -47,7 +47,7 @@ def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, li
 
     # MQTTSA found readable topics -> mitigations
     if len(topics_readable)+len(sys_topics_readable)>0:
-        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA successfully intercepted all the messages belonging to " +str(len(topics_readable)+len(sys_topics_readable)) + " topics, "+str(len(topics_readable))+" of them non $SYS.</b>")
+        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA successfully intercepted all the messages belonging to " +str(len(topics_readable)+len(sys_topics_readable)) + " topics, "+str(len(topics_readable))+" of them non $SYS. Intercepted data was stored in the 'messages' folder.</b>")
         if len(topics_readable)>0:
             pdfw.add_to_existing_paragraph("The non-SYS topics are: "+str(list(topics_readable)))
         if len(sys_topics_readable)>0:
@@ -114,22 +114,22 @@ def fingerprinting_report(pdfw, brocker_info):
         if not brockers["mosquitto"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Mosquitto version is not updated</b>: please refer to the last <a href="https://mosquitto.org/ChangeLog.txt">Change log</a> for bugs and security issues.')
         else:
-            pdfw.add_to_existing_paragraph('Mosquitto version IO is up-to-date.')
+            pdfw.add_to_existing_paragraph('Mosquitto version is up-to-date.')
     elif "hivemq" in brocker_info:
         if not brockers ["hivemq"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]HiveMQ version is not updated</b>: please refer to the last <a href="https://www.hivemq.com/changelog/">Change log</a> for bugs and security issues.')
         else:
-            pdfw.add_to_existing_paragraph('HiveMQ version IO is up-to-date.')
+            pdfw.add_to_existing_paragraph('HiveMQ version is up-to-date.')
     elif "vernemq" in brocker_info:
         if not brockers ["vernemq"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]VerneMQ version is not updated</b>: please refer to the last <a href="https://github.com/vernemq/vernemq/blob/master/changelog.md">Change log</a> for bugs and security issues.')
         else:
-            pdfw.add_to_existing_paragraph('VerneMQ version IO is up-to-date.')
+            pdfw.add_to_existing_paragraph('VerneMQ version is up-to-date.')
     elif "emq" in brocker_info:
         if not brockers ["emqx"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]EMQ version is not updated</b>: please refer to the last <a href="http://emqtt.io/changelogs">Change log</a> for bugs and security issues.')
         else:
-            pdfw.add_to_existing_paragraph('EMQ version IO is up-to-date.')
+            pdfw.add_to_existing_paragraph('EMQ version is up-to-date.')
     elif "adafruit" in brocker_info:
         if not brockers ["adafruit"] in brocker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Adafruit IO version is not updated</b>: please refer to the last <a href="https://io.adafruit.com/blog/">Change log</a> for bugs and security issues.')
