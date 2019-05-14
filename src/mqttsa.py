@@ -13,18 +13,20 @@ import malformed_data.malformed_data as md
 from time import sleep
 import paho.mqtt.client as mqtt
 
-# function called after the connection
+# function called after MQTTSA connects with the broker, whether the connection was successful or not
 def on_connect(client, userdata, flags, rc):
+
+    # set to True if the authentication is not required
     global no_authentication
-
-    # brute_foce_dec is a boolean that is True if the user wants to perform a brute force attack, otherwise is False
-    # here we check the return code of the response of the broker and if the brute force is not required, we set that variable to False
+    # set to True if the user wants to perform a brute force attack, otherwise is False
     global brute_force_dec
+    # set to True if the user asked for bruteforce attack but is not needed
     global brute_force_cannot_be_executed
+    # set to True if the password is not required
     global no_pass
-
-    #Set to true if the authentication with intercepted credential succeeds
+    # set to True if the authentication with intercepted credential succeeds
     global auth_anyway
+
     # if return code is 0, connected!
     if rc==0:
         # the state variable is used to trace how we connected to the broker
@@ -34,11 +36,9 @@ def on_connect(client, userdata, flags, rc):
         if state==0:
             print('Connected! Returned code: ' +str(rc)+'\n')
             if brute_force_dec:
-                # User asked bruteforce, but not needed
                 brute_force_cannot_be_executed = True
             print('Brute force not required!')
             brute_force_dec = False
-            # authentication is not required
             no_authentication = True
             no_pass = True
         elif state==1:
@@ -50,34 +50,45 @@ def on_connect(client, userdata, flags, rc):
             auth_anyway = True
             print('Connected successfully using a usename and password found with sniffing\n')
     elif (rc!=4):
-    #temp    brute_force_dec = False
-        # we create a special flag to have an appropriate section in the final report
-    #temp    brute_force_cannot_be_executed = True
-        # authentication may be required
         if(state != 0):
             print('Not connected, Returned code: '+str(rc)+'\n')
 
 # function called after the reception of a message
 def on_message(client, userdata, message):
+
+    # set of readable topics
     global topics_readable
+    # set of writable topics
     global topics_writable
+    # set of readable topics (SYS)
     global sys_topics_readable
+    # set of writable topics (SYS)
     global sys_topics_writable
+    # we set this variable to True so that we indicate that we were able to read a message, with a possibe disclosure of information
     global information_disclosure
+    information_disclosure = True
+
+    # INFO OF THE BROKER
+
+    # number of connected clients
     global connected_clients
+    # the version of the broker
     global broker_info
+    # is a regex definend in the main to match IoT brands
     global pattern_iot_2
+    # contains the message used for testing purposes (can be set by the user)
     global text_message
-    
+
     # print message and topic
     try:
+        # contains the content of the message
         payload = message.payload.decode("utf-8")
         print('message received '+ payload)
     except:
         payload = str(message.payload, 'utf-8')
         print('message received but cannot decode as utf-8: ' + payload)
 
-    # If we can read, add in readable set
+    # If we can read, we add the topic in the corresponding readable set
     if '$SYS' in str(message.topic):
         sys_topics_readable.add(str(message.topic.replace('#','')))
         if(connected_clients == None and str(message.topic) == '$SYS/broker/clients/connected'):
@@ -85,26 +96,24 @@ def on_message(client, userdata, message):
         if(broker_info == None and str(message.topic) == '$SYS/broker/version'):
             broker_info = payload
     else:
-        # add topic in the set of topic
         topics_readable.add(str(message.topic.replace('#','')))
 
-    information_disclosure = True
-
+    # this function parses the content of the message to extract useful information
     parse_message(payload)
     if (pattern_iot_2.match(message.topic)):
-        iot.append(payload)  
-    
-    # If we found the test message, we can write, so add to writable list
+        iot.append(payload)
+
+    # If we found the test message, this means that we can write, so we add the topic to the corresponding writable list
     try:
         if (text_message==payload):
             if '$SYS' in str(message.topic):
                 sys_topics_writable.add(str(message.topic))
             else:
-                # add topic in the set of topic
                 topics_writable.add(str(message.topic))
     except:
         pass
 
+# when a message is intercepted, it will be parsed by this function to extract useful information and store them in external files
 def parse_message(message):
     global mac_address
     global pattern_mac_address
@@ -148,7 +157,7 @@ def parse_message(message):
     if (pattern_passw.match(message)):
         passw.append(message)
     if (pattern_iot.match(message)):
-        iot.append(message)      
+        iot.append(message)
     if (pattern_msg.match(message)):
         msg.append(message)
     if (pattern_status.match(message)):
@@ -169,22 +178,32 @@ def parse_message(message):
         mac_address.append(message)
     if (pattern_ipv4.match(message)):
         ipv4.append(message)
-        
+
     raw_messages.append(message)
-    
+
+# this function writes the extracted content of messages in external files
 def save_list(list, type):
     with open('messages/'+type+'.txt', 'w', encoding='utf-8') as f:
         for item in list:
             f.write("%s\n" % item)
-    
+
+# main function
 if __name__== "__main__":
+    # set of readable topics
     global topics_readable
+    # set of writable topics
     global topics_writable
+    # set of readable topics (SYS)
     global sys_topics_readable
+    # set of writable topics (SYS)
     global sys_topics_writable
+    # set to True if we could read at least one message
     global information_disclosure
+    # set to True if brute force cannot be executed but the user asked for it
     global brute_force_cannot_be_executed
+    # number of clients connected to the broker (if we can get this info)
     global connected_clients
+    # version of the broker (if we can get this info)
     global broker_info
     
     #Define regex patters to parse intercepted messages
@@ -219,9 +238,10 @@ if __name__== "__main__":
     pattern_dir = re.compile("((\.)*((\\\\)+[A-Za-z0-9_\s]{1,})+(\.[A-Za-z0-9_\s]{1,})?)|((\.)*((\/)+[A-Za-z0-9_\s]{1,})+(\.[A-Za-z0-9_\s]{1,})?|path)")
     # Regex for "lat/long/loc"
     pattern_gps = re.compile("(lat|lon|loc)")
-    
-    # PARSING INPUT
+
+    # initialization of the parser
     parser = utils.create_parser()
+    # initialization of the object to write the pdf with the results of the attacks
     pdf = pdfw.init()
 
     # if no broker_ip is specified: error!
@@ -266,7 +286,7 @@ if __name__== "__main__":
     elif not os.path.exists(wordlist_path):
         print('[!] path for the wordlist not found!')
         quit(42)
-    
+
     if threads== None or threads<1:
         print('[!] threads wrong or not specified, setting it to 10')
         threads=10
@@ -296,19 +316,16 @@ if __name__== "__main__":
     print('[*] DOING MALFORMED DATA:    ' + str(not malformed_data == None))
     print('[*] TEXT MESSAGE             ' + text_message+'\n')
 
-
     # VARIABLES
 
-    # authentication may be required - Set to true if it is able to connect
+    # Initialization of variables
+
     no_authentication = False
-    # information disclosure
     information_disclosure = False
-    # topics available
     topics_readable = set()
     topics_writable = set()
     sys_topics_readable = set()
     sys_topics_writable = set()
-    # Password is required for login
     no_pass = False
     bruteforce_results = [False]
     username_bug = False
@@ -333,10 +350,10 @@ if __name__== "__main__":
     gps = []
     test = []
     raw_messages = []
-    
+
     # SCRIPT
-    
-    # get broker IP as string in argv
+
+    # get broker IP as string from arguments
     broker_ip = sys.argv[1]
 
     # state 0 -> No username, No password
@@ -351,6 +368,7 @@ if __name__== "__main__":
     client.on_connect = on_connect
     client.on_message = on_message
 
+    # if the user specified a path to a tls certificate, we try to connect using that certificate
     if tls_cert != None:
         client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
         client.tls_insecure_set(True)
@@ -360,13 +378,13 @@ if __name__== "__main__":
     client.loop_start()
     print('Trying to connect...\n')
     sleep(5)
-    
-    # in case connection worked
+
+    # in case connection worked ('no_authentication' variable will be set to True)
     if (no_authentication):
-        # Subscribe to all
+        # Subscribe to all topics
         client.subscribe('#')
 
-        # Subscribe to SYS topics
+        # Subscribe to all SYS topics
         client.subscribe('$SYS/#')
 
         # client will start receiving some messages
@@ -391,7 +409,7 @@ if __name__== "__main__":
 
     # state 4 -> Attempt authentication with intercepted data
     state = 4
-    
+
     # in case we were not able to connect first we try to use credentials intercepted with the 
     # sniffing attack (if specified), otherwise we will proceed with the other attacks
     if interface!=None:
@@ -408,12 +426,15 @@ if __name__== "__main__":
 
             client.connect(broker_ip,port)
             client.loop_start()
-            
+
+            # we subscribe to all topics
             client.subscribe('#')
+            # we subscribe to all SYS topics
             client.subscribe('$SYS/#')
-            
+
+            # client will start receiving some messages
             sleep(listening_time)
-            
+
             # if the non intrusive flag was set, we just listen for messages but we don't try to write onto them
             all_topics = topics_readable.union(sys_topics_readable)
             if (non_intrusive != True and (len(all_topics))!=0):
@@ -424,7 +445,7 @@ if __name__== "__main__":
                     print('Trying to write in: '+str(i) +' as '+u)
                     client.publish(i,text_message)
                     sleep(1)
-            
+
             client.loop_stop()
             client.disconnect()
 
@@ -450,11 +471,14 @@ if __name__== "__main__":
         sleep(5)
         client.loop_stop()
         client.disconnect()
+
+        # if the password is actually required
         if not no_pass:
             print('\nPerforming brute force...\n')
             # perform brute force
             bruteforce_results = bruteforce.brute_force(broker_ip,port,username,wordlist_path, tls_cert, client_cert,client_key)
             username_bug = bruteforce.username_bug(broker_ip,port, tls_cert, client_cert, client_key)
+            # bruteforce_results is an array containing two variables, a boolean set to True if the attack was successful and the password's value if it was able to find it
             if bruteforce_results[0]:
                 # state 2 -> username, password
                 state = 2
@@ -479,12 +503,15 @@ if __name__== "__main__":
             else:
                 print('[!] Brute force was not successful\n')
 
+        # if bruteforce was successful or the state variable is different from 2
         if not ((not bruteforce_results[0]) and state==2):
             client = mqtt.Client()
             client.on_connect = on_connect
             client.on_message = on_message
+            # state = 1 -> username but no password
             if state == 1:
                 client.username_pw_set(username,password=None)
+            # state = 2 -> username and password
             elif state == 2:
                 client.username_pw_set(username,password)
 
@@ -492,7 +519,7 @@ if __name__== "__main__":
             if tls_cert != None:
                 client.tls_set(tls_cert, client_cert, client_key, ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
-                
+
             client.connect(broker_ip,port)
             client.loop_start()
             # Subscribe to all
@@ -518,7 +545,7 @@ if __name__== "__main__":
             client.disconnect()
 
     # check if there are writable topics and in case perform data tampering attack
-    # in case no writable topics are found, try with a default one
+    # in case no writable topics are found, try with a default topic name
     if malformed_data:
         if len(topics_writable)!=0:
             mal_data_topic = next(iter(topics_writable))
@@ -554,12 +581,13 @@ if __name__== "__main__":
                                                  tls_cert=tls_cert,
                                                  client_cert=client_cert)
 
-
+    # We print some information on the console
     print('[*] LISTENING TIME:      ' + str(listening_time))
     print('[*] DOING DOS:           ' + str(not dos_connections == None))
     print('[*] DOING BRUTEFORCE:    ' + str(brute_force_dec))
     print('[*] TEXT MESSAGE         ' + text_message+'\n')
 
+    # We start adding paragraphs to the pdf with the result of the attacks
     pdfw.add_paragraph("Details of the assessment")
     pdfw.add_to_existing_paragraph("Broker ip: "+str(broker_ip))
     pdfw.add_to_existing_paragraph("Listening time: "+str(listening_time))
@@ -608,6 +636,7 @@ if __name__== "__main__":
     # function that generates the pdf report
     pdfw.output_pdf()
 
+    # We save all the information extracted from messages in external files
     if mac_address:
         save_list(mac_address, 'mac_addresses')
     if ipv4:
@@ -640,7 +669,7 @@ if __name__== "__main__":
         save_list(test, 'test')
     if raw_messages:
         save_list(raw_messages, 'raw_messages')
-        
+
     # Printing a brief summary of the attacks on the console
     print('\n\n')
 
@@ -656,12 +685,6 @@ if __name__== "__main__":
         print('         + # of Topics we wrote:         '+str(len(topics_writable)))
         print('         + # of SYS Topics we read:      '+str(len(sys_topics_readable)))
         print('         + # of SYS Topics we wrote:     '+str(len(sys_topics_writable)))
-
-        #print('        + Topics in which we read:     '+str(topics_readable))
-        #print('        + Topics in which we wrote:    '+str(topics_writable))
-
-        #print('        + SYS topics in which we read:     '+str(sys_topics_readable))
-        #print('        + SYS topics in which we wrote:    '+str(sys_topics_writable))
         if(not connected_clients == None):
             print('         + # of Connected Clients:       '+str(connected_clients))
         if(not broker_info == None):

