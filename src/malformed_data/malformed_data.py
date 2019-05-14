@@ -12,9 +12,13 @@ class MyError:
 # custom class to store values about the results of the malformed data attack
 class Malformed:
     def __init__(self, packet, parameter):
+        # the packet under testing (CONNECT, PUBLISH...)
         self.packet = packet
+        # the parameter of the packet under testing
         self.parameter = parameter
+        # array of MyError objects
         self.errors = []
+        # array of values for which there was no error
         self.successes = []
 
     def add_error(self, error):
@@ -45,6 +49,7 @@ def malformed_data(host, port, topic, tls_cert, client_cert, client_key, credent
     # return the results of the test
     return mal_data
 
+# Function that tests parameters of the CONNECT packet
 def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
     global mal_data
     client = mqtt.Client()
@@ -134,6 +139,7 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
             mal.add_error(err)
     mal_data.append(mal)
 
+# Function that tests parameters of the PUBLISH packet
 def test_publish_packet(host, port, topic, tls_cert, client_cert, client_key, credentials):
     global mal_data
     client = mqtt.Client()
@@ -142,11 +148,12 @@ def test_publish_packet(host, port, topic, tls_cert, client_cert, client_key, cr
             client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
                             tls_version=ssl.PROTOCOL_TLS, ciphers=None)
             client.tls_insecure_set(True)
-            
+
+    # if there are credentials in the 'credentials' variable, we try to connect using them
     if (len(credentials) !=0):
             c = list(credentials)[0]
             client.username_pw_set(c.username, c.password)
-    
+
     client.connect(host, port, keepalive=60, bind_address="")
 
     #Try every malformed value for the topic value
