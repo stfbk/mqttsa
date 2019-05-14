@@ -1,5 +1,13 @@
 # MQTTSA
-The goal of MQTTSA is to automatically detect misconfigurations in MQTT brokers, to provide a report of the potential vulnerabilities, and a list of (high level) measures to deploy for mitigation.  
+
+The goal of MQTTSA is to automatically detect misconfigurations in MQTT brokers, to provide a report (in a pdf format) of the potential vulnerabilities, and a list of (high level) measures to deploy for mitigation.  
+
+## Install
+
+**MQTTSA** requires (e.g. via `apt`) the following packets: `python-pip libxml2-dev libxslt-dev python-dev tshark` -- to allow the execution as non-root user, select yes when prompted. Run `make` to install the additional requirements with `pip` (from `requirements.txt`). If necessary, add the user to the wireshark group via `sudo adduser $USER wireshark`.
+
+## Usage
+
 Run the tool with the following command specifying the IP address of the broker:  
 `python mqtt.py {IP_OF_THE_BROKER}`  
 The following arguments are available to set specific parameters of the execution or to enable some attacks:  
@@ -19,13 +27,16 @@ The following arguments are available to set specific parameters of the executio
 --tls               Specify the path for a CA certificate to use when connecting with TLS. If required by the brocker, specify also the path to a client certificate and key with, respectively, the "--cert" and "--key" options
 ```
 
-The attacks implemented are the following:  
+When the analysis is complete, a pdf (called `report.pdf`) is created. In these report are listed the results of the attacks performed by MQTTSA and, based on these results, some high level suggestions to improve the security of the MQTT instance.
+
+## Attacks
+
+The attacks implemented are the following:
+
 - Sniffing attack
+- Denial of Service
 - Brute Force
 - Information Disclosure
 - Malformed Data
 - Denial of Service
 
-# Requirements
-
-MQTTSA requires (e.g. via APT) the following packets: `python-pip libxml2-dev libxslt-dev python-dev tshark` -- to allow the execution as non-root user, select yes when prompted; run `make` to install additional requirements with `PIP` (from `requirements.txt`). If necessary, add the user to the wireshark group via `sudo adduser $USER wireshark`.

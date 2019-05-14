@@ -65,7 +65,7 @@ def on_message(client, userdata, message):
     global sys_topics_writable
     global information_disclosure
     global connected_clients
-    global brocker_info
+    global broker_info
     global pattern_iot_2
     global text_message
     
@@ -82,8 +82,8 @@ def on_message(client, userdata, message):
         sys_topics_readable.add(str(message.topic.replace('#','')))
         if(connected_clients == None and str(message.topic) == '$SYS/broker/clients/connected'):
             connected_clients = payload
-        if(brocker_info == None and str(message.topic) == '$SYS/broker/version'):
-            brocker_info = payload
+        if(broker_info == None and str(message.topic) == '$SYS/broker/version'):
+            broker_info = payload
     else:
         # add topic in the set of topic
         topics_readable.add(str(message.topic.replace('#','')))
@@ -185,7 +185,7 @@ if __name__== "__main__":
     global information_disclosure
     global brute_force_cannot_be_executed
     global connected_clients
-    global brocker_info
+    global broker_info
     
     #Define regex patters to parse intercepted messages
     pattern_test = re.compile("^([A-Z][0-9]+)+$")
@@ -248,7 +248,7 @@ if __name__== "__main__":
     brute_force_dec     = True
 
     connected_clients = None
-    brocker_info = None
+    broker_info = None
 
     # Printing errors or setting default values
     print('')
@@ -568,15 +568,15 @@ if __name__== "__main__":
     pdfw.add_to_existing_paragraph("Brute force performed: "+str(brute_force_dec))
 
     # authorization mechanism results
-    write_results.authorization_report(pdfw, no_authentication, brocker_info, auth_anyway, interface)
+    write_results.authorization_report(pdfw, no_authentication, broker_info, auth_anyway, interface)
 
     # information disclosure results
-    write_results.information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, brocker_info, no_authentication)
+    write_results.information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, broker_info, no_authentication)
     write_results.tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_readable, sys_topics_readable, text_message)
 
     # fingerprinting
-    if brocker_info != None:
-        write_results.fingerprinting_report(pdfw, brocker_info)
+    if broker_info != None:
+        write_results.fingerprinting_report(pdfw, broker_info)
     
     # sniffing attack results
     if interface!=None:
@@ -592,14 +592,14 @@ if __name__== "__main__":
             if p != '':
                 passwords.append(p)
 
-        write_results.sniffing_report(pdfw, usernames, passwords, clientIds, listening_time, brocker_info)
+        write_results.sniffing_report(pdfw, usernames, passwords, clientIds, listening_time, broker_info)
 
     # brute force results
     if brute_force_dec == True and brute_force_cannot_be_executed == False:
         write_results.brute_force_report(pdfw, username, wordlist_path, password, no_pass, brute_force_dec)
 
     # dos results
-    write_results.dos_report(pdfw, dos_connections, brocker_info)
+    write_results.dos_report(pdfw, dos_connections, broker_info)
 
     # malformed data results
     if mal_data!=None:
@@ -664,8 +664,8 @@ if __name__== "__main__":
         #print('        + SYS topics in which we wrote:    '+str(sys_topics_writable))
         if(not connected_clients == None):
             print('         + # of Connected Clients:       '+str(connected_clients))
-        if(not brocker_info == None):
-            print('         + brocker info:                 '+str(brocker_info))
+        if(not broker_info == None):
+            print('         + broker info:                 '+str(brcker_info))
     else:
         print('         + No topics detected')
     print('')

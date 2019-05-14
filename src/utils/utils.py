@@ -2,6 +2,7 @@ import optparse
 
 # Create parser with parameters options
 def create_parser():
+
     # parse the options for the tool
     parser = optparse.OptionParser('Usage: python mqtt.py *broker_ip* [ARGS]')
 
@@ -14,16 +15,16 @@ def create_parser():
     # use '-d' to specify the connections to send to perform dos, if not specified: no dos
     parser.add_option('-c', dest='dos_connections', type='int', help='Specify the amount of connections to perform the DoS test, if not specified: no DoS')
 
-    # use '-u' to specify the username for the brute force test, if not specified: no brute force
+    # use '-u' to specify the username for the brute force test, if not specified: no brute force attack is performed
     parser.add_option('-u', dest='username', type='string', help='Specify the username, if not specified: no brute force test')
 
-    # use '-w' to specify the path to the wordlist for the brute force test, if not specified: no brute force
+    # use '-w' to specify the path to the wordlist for the brute force test, if not specified: no brute force attack is performed
     parser.add_option('-w', dest='wordlist_path', type='string', help='Specify the path to the wordlist, if not specified: no brute force')
 
     # use '-x' to specify the threads for the brute force, if not specified: 1
     parser.add_option('-x', dest='threads',type='int',help='Specify the number of threads for the Denial of Service test, if not specified: 10')
 
-    # use '-i' to specify the interface for the sniffing test, if not specified: no sniffing test 
+    # use '-i' to specify the interface for the sniffing test, if not specified: no sniffing test is performed
     parser.add_option('-i', dest='interface',type='string',help='Specify the interface for the sniffing test, if not specified: no sniffing test')
 
     # use '-p' to specify the port, if not specified: 1883
@@ -45,5 +46,3 @@ def create_parser():
     parser.add_option('--key', dest='client_key', type='string' ,help='Specify the path of the client key associated to its certificate')
     
     return parser
-
-

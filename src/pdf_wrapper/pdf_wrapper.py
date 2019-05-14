@@ -1,16 +1,22 @@
 import fpdf
 from fpdf import FPDF, HTMLMixin
 
+# Create pdf report to show the results in a readable way
+# The content of the pdf has to be written following the 
+# HTML standard. It will be converted in pdf at the end, 
+# using output_pdf()
+
 class MyFPDF(FPDF, HTMLMixin):
     pass
 
+# parameters for the pdf
 pdf = MyFPDF()
 font_size = 11
 html = ''
 check = False
 
 
-# init the structure of the pdf and append the title in an HTML format
+# initialize the structure of the pdf and append the title of the report in an HTML format
 def init():
     global html
     global check
@@ -37,7 +43,7 @@ def add_sub_paragraph(title, msg=None):
     else:
         html += '<h4 align="left">'+title+'</h4>'
 
-# append into the existing paragraph of the HTML
+# append to an existing paragraph of the HTML
 def add_to_existing_paragraph(msg):
     global html
     html += "<font size="+str(font_size)+">"+msg+'</font><br>'

