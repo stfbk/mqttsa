@@ -150,7 +150,8 @@ def test_publish_packet(host, port, topic, tls_cert, client_cert, client_key, cr
             client.tls_insecure_set(True)
 
     # if there are credentials in the 'credentials' variable, we try to connect using them
-    if (len(credentials) !=0):
+    if (credentials is not None):
+        if (len(credentials) !=0):
             c = list(credentials)[0]
             client.username_pw_set(c.username, c.password)
 

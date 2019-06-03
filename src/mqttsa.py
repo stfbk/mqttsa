@@ -553,6 +553,8 @@ if __name__== "__main__":
             mal_data_topic = next(iter(sys_topics_writable))
         else:
             mal_data_topic = "Topic1"
+        if ('credentials' not in locals()):
+            credentials = None
         mal_data = md.malformed_data(broker_ip, port, mal_data_topic, tls_cert, client_cert, client_key, credentials)
     else:
         mal_data = None
