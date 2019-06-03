@@ -688,7 +688,7 @@ if __name__== "__main__":
         if(not connected_clients == None):
             print('         + # of Connected Clients:       '+str(connected_clients))
         if(not broker_info == None):
-            print('         + broker info:                 '+str(brcker_info))
+            print('         + broker info:                 '+str(broker_info))
     else:
         print('         + No topics detected')
     print('')
