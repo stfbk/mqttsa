@@ -6,3 +6,4 @@ src/malformed_data/*.pyc
 src/pdf_wrapper/*.pyc
 src/sniff/*.pyc
 src/utils/*.pyc
+src/messages/*
