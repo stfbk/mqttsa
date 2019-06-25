@@ -9,7 +9,7 @@ def broker_dos(host, port, connections, topic="", tls_cert=None, client_cert=Non
     client = mqtt.Client()
 
     # here we load an image (10MB) in the payload of the message to try exhausting broker's resources
-    f= open("tree.jpg", 'rb')
+    f= open("dos/tree.jpg", 'rb')
     filecontent = f.read()
     byteArr = bytearray(filecontent)
 

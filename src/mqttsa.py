@@ -183,7 +183,9 @@ def parse_message(message):
 
 # this function writes the extracted content of messages in external files
 def save_list(list, type):
-    with open('messages/'+type+'.txt', 'w', encoding='utf-8') as f:
+    if not os.path.exists("messages"):
+        os.makedirs("messages")
+    with open('messages/'+type+'.txt', 'w+', encoding='utf-8') as f:
         for item in list:
             f.write("%s\n" % item)
 
