@@ -1,6 +1,6 @@
 import ssl
 import sys
-import pdf_wrapper as pdfw
+import src.pdf_wrapper as pdfw
 import paho.mqtt.client as mqtt
 
 # custom class for storing errors returned when trying the malformed data attack

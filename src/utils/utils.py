@@ -21,9 +21,6 @@ def create_parser():
     # use '-w' to specify the path to the wordlist for the brute force test, if not specified: no brute force attack is performed
     parser.add_option('-w', dest='wordlist_path', type='string', help='Specify the path to the wordlist, if not specified: no brute force')
 
-    # use '-x' to specify the threads for the brute force, if not specified: 1
-    parser.add_option('-x', dest='threads',type='int',help='Specify the number of threads for the Denial of Service test, if not specified: 10')
-
     # use '-i' to specify the interface for the sniffing test, if not specified: no sniffing test is performed
     parser.add_option('-i', dest='interface',type='string',help='Specify the interface for the sniffing test, if not specified: no sniffing test')
 

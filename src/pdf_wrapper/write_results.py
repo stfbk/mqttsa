@@ -1,9 +1,11 @@
-import pdf_wrapper as pdfw
+import src.pdf_wrapper as pdfw
 
 '''
 This functions are used to dynamically create the report based
 on the results of the attacks performed by MQTTSA.
 '''
+
+outdated_broker = "No"
 
 # Authorization mechanism section
 def authorization_report(pdfw, no_authentication, broker_info, auth_anyway, interface):
@@ -36,7 +38,7 @@ def authorization_report(pdfw, no_authentication, broker_info, auth_anyway, inte
         if auth_anyway==True:
             pdfw.add_to_existing_paragraph('<b>[!] However, it was able to intercept and use valid client credentials</b>.')
         elif interface != None:
-            pdfw.add_to_existing_paragraph('<br>Try to listen on a network interface to assess the possibility to sniff credentials. We suggest the use of Wireshark (https://www.wireshark.org/).')
+            pdfw.add_to_existing_paragraph('Try to listen on a network interface to assess the possibility to sniff credentials. We suggest the use of Wireshark (https://www.wireshark.org/).')
             
 # Information disclosure section
 def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, broker_info, no_authentication):
@@ -75,7 +77,6 @@ def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, li
         pdfw.add_to_existing_paragraph("MQTTSA was not able to intercept messages exchanged by clients.<br> It could be that no messages were exchanged durinfg this time interval, try to perform the assessment again, increasing the 'listening_time' parameter.")
 
 # Tampering data section
-
 def tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_readable, sys_topics_readable, text_message):
     pdfw.add_paragraph("Tampering data")
 
@@ -100,10 +101,11 @@ def tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_rea
     
 # Broker fingerprinting section
 def fingerprinting_report(pdfw, broker_info):
+    global outdated_broker
     pdfw.add_paragraph("Broker Fingerprinting")
         
     brokers = {}
-    with open("brokers_last_version.txt") as brokers_last_version:
+    with open("src/brokers_last_version.txt") as brokers_last_version:
         for line in brokers_last_version:
             name, version = line.partition("=")[::2]
             brokers[name.strip()] = version.strip()
@@ -113,56 +115,63 @@ def fingerprinting_report(pdfw, broker_info):
     if "mosquitto" in broker_info:
         if not brokers["mosquitto"] in broker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Mosquitto version is not updated</b>: please refer to the last <a href="https://mosquitto.org/ChangeLog.txt">Change log</a> for bugs and security issues.')
+            outdated_broker = "Yes"
         else:
             # The version detected is the last one
             pdfw.add_to_existing_paragraph('Mosquitto version is up-to-date.')
     elif "hivemq" in broker_info:
         if not brokers ["hivemq"] in broker_info:
             pdfw.add_to_existing_paragraph('<b>[!]HiveMQ version is not updated</b>: please refer to the last <a href="https://www.hivemq.com/changelog/">Change log</a> for bugs and security issues.')
+            outdated_broker = "Yes"
         else:
-            # The version detected is the last one
             pdfw.add_to_existing_paragraph('HiveMQ version is up-to-date.')
     elif "vernemq" in broker_info:
         if not brokers ["vernemq"] in broker_info:
             pdfw.add_to_existing_paragraph('<b>[!]VerneMQ version is not updated</b>: please refer to the last <a href="https://github.com/vernemq/vernemq/blob/master/changelog.md">Change log</a> for bugs and security issues.')
+            outdated_broker = "Yes"
         else:
-            # The version detected is the last one
             pdfw.add_to_existing_paragraph('VerneMQ version is up-to-date.')
     elif "emq" in broker_info:
         if not brokers ["emqx"] in broker_info:
             pdfw.add_to_existing_paragraph('<b>[!]EMQ version is not updated</b>: please refer to the last <a href="http://emqtt.io/changelogs">Change log</a> for bugs and security issues.')
+            outdated_broker = "Yes"
         else:
             pdfw.add_to_existing_paragraph('EMQ version is up-to-date.')
     elif "adafruit" in broker_info:
         if not brokers ["adafruit"] in broker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Adafruit IO version is not updated</b>: please refer to the last <a href="https://io.adafruit.com/blog/">Change log</a> for bugs and security issues.')
+            outdated_broker = "Yes"
         else:
             pdfw.add_to_existing_paragraph('Adafruit IO is up-to-date.')
     elif "machine_head" in broker_info:
         if not brokers ["machine_head"] in broker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Machine Head version is not updated</b>: please refer to the last <a href="https://github.com/clojurewerkz/machine_head/blob/master/ChangeLog.md">Change log</a> for bugs and security issues.')
+            outdated_broker = "Yes"
         else:
             pdfw.add_to_existing_paragraph('Machine Head is up-to-date.')
     elif "moquette" in broker_info:
         if not brokers ["moquette"] in broker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Moquette version is not updated</b>: please refer to the last <a href="https://github.com/andsel/moquette/blob/master/ChangeLog.txt">Change log</a> for bugs and security issues.')
+            outdated_broker = "Yes"
         else:
             pdfw.add_to_existing_paragraph('Moquette is up-to-date.')
     elif "solace" in broker_info:
         if not brokers ["solace"] in broker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Solace PubSub+ version is not updated</b>: please refer to the last <a href="https://products.solace.com/download/PUBSUB_STAND_RN">Release notes</a> for bugs and security issues.')
+            outdated_broker = "Yes"
         else:
             pdfw.add_to_existing_paragraph('Solace PubSub+ is up-to-date.')
     elif "thingstream" in broker_info:
         if not brokers ["thingstream"] in broker_info:
             pdfw.add_to_existing_paragraph('<b>[!]Thingstream version is not updated</b>: please refer to the last <a href="https://sites.google.com/thingstream.io/docs/release-notes">Release notes</a> for bugs and security issues.')
+            outdated_broker = "Yes"
         else:
             pdfw.add_to_existing_paragraph('Thingstream is up-to-date.')
     else:
+        outdated_broker = "/"
         pdfw.add_to_existing_paragraph('MQTTSA was not able to detect if the broker is up-to-date. Please verify manually.')
 
 # Sniffing data section
-
 def sniffing_report(pdfw, usernames, passwords, clientids, listening_time, broker_info):
     pdfw.add_paragraph("Sniffing")
 
@@ -197,35 +206,27 @@ def sniffing_report(pdfw, usernames, passwords, clientids, listening_time, broke
         pdfw.add_to_existing_paragraph("MQTTSA was not able to intercept any credential information.") 
 
 # Brute force section
-
-def brute_force_report(pdfw, username, wordlist, password, no_pass, brute_force_dec):
+def brute_force_report(pdfw, username, wordlist, password, no_pass):
     pdfw.add_paragraph("Brute force")
-    # NEW FLAG NEEDED FOR WHEN CANNOT BE PERFORMED 
-    # Brute force cannot be performed
-    if brute_force_dec == True:
-        pdfw.add_to_existing_paragraph("<b> The brute force test can not be performed. Authentication mechanism may not use username/password or not be enforced at all, check the Authentication section.<b>")
-    
-    # Brute force can be performed
-    else:
 
-        # No password required to login
-        if no_pass:
-            pdfw.add_to_existing_paragraph("<b>[!] The brute force test was not needed. Authentication mechanism in use is enforced through only username.</b>")
-        # Password required to login
+    # No password required to login
+    if no_pass:
+        pdfw.add_to_existing_paragraph("<b>[!] The brute force test was not needed. Authentication mechanism in use is enforced through only username.</b>")
+    # Password required to login
+    else:
+        pdfw.add_to_existing_paragraph("<b>[!] The brute force test was succesfull.</b>")
+        # No password found
+        if password == None:
+            pdfw.add_to_existing_paragraph("<b>[!] The brute force test was not able to determine a correct password to authenticate. Try to insert another wordlist.</b>")
+            pdfw.add_to_existing_paragraph("Username provided: "+ str(username))
+            pdfw.add_to_existing_paragraph("Wordlist path provided: "+ str(wordlist))
+        
+        # Password found
         else:
-            pdfw.add_to_existing_paragraph("<b>[!] The brute force test was performed.</b>")
-            # No password found
-            if password == None:
-                pdfw.add_to_existing_paragraph("<b>[!] The brute force test was not able to determine a correct password to authenticate. Try to insert another wordlist.</b>")
-                pdfw.add_to_existing_paragraph("Username provided: "+ str(username))
-                pdfw.add_to_existing_paragraph("Wordlist path provided: "+ str(wordlist))
-            
-            # Password found
-            else:
-                pdfw.add_to_existing_paragraph("<b>[!] The brute force test was able to find a password to authenticate.</b>")
-                pdfw.add_to_existing_paragraph("Username provided: "+ str(username))
-                pdfw.add_to_existing_paragraph("Wordlist path provided: "+ str(wordlist))
-                pdfw.add_to_existing_paragraph("Password found: "+ str(password))
+            pdfw.add_to_existing_paragraph("<b>[!] The brute force test was able to find a password to authenticate.</b>")
+            pdfw.add_to_existing_paragraph("Username provided: "+ str(username))
+            pdfw.add_to_existing_paragraph("Wordlist path provided: "+ str(wordlist))
+            pdfw.add_to_existing_paragraph("Password found: "+ str(password))
 
         # Mitigations
         pdfw.add_sub_paragraph("<br>Suggested mitigations")
@@ -237,16 +238,16 @@ def brute_force_report(pdfw, username, wordlist, password, no_pass, brute_force_
         pdfw.add_to_existing_paragraph('<a href="https://thingsboard.io/docs/user-guide/certificates/">ThingsBoard: X.509 Certificate Based Authentication</a>')
 
 # Denial of Service section
-
-def dos_report(pdfw, dos_connections, broker_info):
+def dos_report(pdfw, dos_connections, connection_difference, percentage_increment, broker_info):
     pdfw.add_paragraph("Denial of service")
     
     # Description
     if dos_connections != None:
-        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA opened "+str(dos_connections)+" connections to stress the broker and test how it will react in case of Denial of Service.<b>") 
+        pdfw.add_to_existing_paragraph("MQTTSA tried to limit the availability of the service by saturating the number of clients connection and incrementing the processing time: it attempted connecting with "+str(dos_connections)+" clients, each publishing a 10MB message.") 
         
-        pdfw.add_to_existing_paragraph("The tool is not able to determine if the test resulted in the loss of connection/reconnection of other clients; thus the user should check the logfile of the broker or any reconnction attempt from clients.")
-        pdfw.add_to_existing_paragraph("In case the test did not result in disconnections or delays, the test can be performed again increasing the <i>dos_connection</i> value.")
+        pdfw.add_to_existing_paragraph("<b>[!]"+((str(connection_difference)+" clients were not able") if (connection_difference > 0) else ("All clients were able")) + " to connect; "+ str(percentage_increment) +"% is the overhead on publishing time caused by the heavy test messages.<b>")
+            
+        pdfw.add_to_existing_paragraph("<br>The tool is not currently able to determine if an existing client was disconnected : the user should check the logfile of the broker for any reconnection attempts or the clients. In case the test did not result in disconnections or delays, the test can be performed again increasing the <i>dos_connection</i> value.")
         
         # Mitigations 
         pdfw.add_sub_paragraph("<br>Suggested mitigations")
@@ -263,11 +264,10 @@ def dos_report(pdfw, dos_connections, broker_info):
         pdfw.add_to_existing_paragraph("MQTTSA was not configured or able to perform a Denial of Service attack on the broker.")
 
 # Malformed data section
-
 def malformed_data_report(pdfw, mal_data, topic):
     pdfw.add_paragraph("Malformed data")
     # Description
-    pdfw.add_to_existing_paragraph("<b>[!] MQTTSA tried to stress the broker by sending malformed packets in the "+str(topic)+" topic.<b>")
+    pdfw.add_to_existing_paragraph("MQTTSA tried to stress the broker by sending malformed packets in the "+str(topic)+" topic.")
     pdfw.add_to_existing_paragraph("An attacker could send malformed packets aiming at triggering errors to cause DoS or obtain information about the broker. We suggest to perform a full fuzzing test to stress the implementation with random well-crafted values. A fuzzer designed for MQTT is developed by F-Secure and can be found on the following link:")
     pdfw.add_to_existing_paragraph('<a href="https://github.com/F-Secure/mqtt_fuzz">Fuzzer F-Secure</a>')
     
