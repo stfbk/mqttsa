@@ -4,12 +4,12 @@ The goal of MQTTSA is to automatically detect misconfigurations in MQTT brokers,
 
 ## Install
 
-**MQTTSA** requires (e.g. via `apt`) the following packets: `python-pip libxml2-dev libxslt-dev python-dev tshark` -- to allow the execution as non-root user, select yes when prompted. Run `make` to install the additional requirements with `pip` (from `requirements.txt`). If necessary, add the user to the wireshark group via `sudo adduser $USER wireshark`.
+**MQTTSA** requires (e.g. via `apt`) the following packets: `python3-pip tshark` -- to allow the execution as non-root user, select yes when prompted. Run `make` to install the additional requirements with `pip3` (from `requirements.txt`). If necessary, add the user to the wireshark group via `sudo adduser $USER wireshark`.
 
 ## Usage
 
 Run the tool with the following command specifying the IP address of the broker:  
-`python mqtt.py {IP_OF_THE_BROKER}`  
+`python3 mqtt.py {IP_OF_THE_BROKER}`  
 The following arguments are available to set specific parameters of the execution or to enable some attacks:  
 
 ```
