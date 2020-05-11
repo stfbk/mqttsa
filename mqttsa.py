@@ -294,8 +294,7 @@ if __name__== "__main__":
     gps = []
     test = []
     raw_messages = []
-
-    # SCRIPT
+    clientIds = []
 
     # get broker IP as string from arguments
     broker_ip = sys.argv[1]
