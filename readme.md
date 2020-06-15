@@ -1,6 +1,6 @@
 # MQTTSA
 
-The goal of MQTTSA is to automatically detect misconfigurations in MQTT brokers, to provide a report (in a pdf format) of the potential vulnerabilities, and a list of (high level) measures to deploy for mitigation.  
+The goal of MQTTSA is to automatically detect misconfigurations in MQTT brokers, to provide a report (in a pdf format) of the potential vulnerabilities, and a list of (high level) mitigation measures to deploy.  
 
 ## Install
 
@@ -8,30 +8,33 @@ The goal of MQTTSA is to automatically detect misconfigurations in MQTT brokers,
 
 ## Usage
 
-Run the tool with the following command specifying the IP address of the broker:  
-`python3 mqtt.py {IP_OF_THE_BROKER}`  
-The following arguments are available to set specific parameters of the execution or to enable some attacks:  
+Run the tool by specifying the broker address (IP/hostname): 
+`python3 mqtt.py [ARGUMENTS] {IP_OF_THE_BROKER}`  
+The following arguments allow to enable different attacks and customize the analysis: 
 
 ```
--h, --help          Show this help message and exit  
--t LISTENING_TIME   Specify the amount of seconds the tool should listen in the channel, default: 60  
--m TEXT_MESSAGE     Specify the text message, if not specified: "testtesttest"  
--c DOS_CONNECTIONS  Specify the amount of connections to perform the DoS attack, if not specified: no DoS  
--u USERNAME         Specify the username, if not specified: no brute force attack  
--w WORDLIST_PATH    Specify the path to the wordlist, if not specified: no brute force  
--x THREADS          Specify the number of threads for the brute force attack, if not specified: 10  
--i INTERFACE        Specify the interface for the sniffing attack, if not specified: no sniffing attack  
--p PORT             Specify the port, if not specified: 1883  
---md                Add flag --md to perform the malformed data attack  
---ni                Add flag --ni to perform non intrusive attacks (not sending messages in case some topics are vulnerable)  
---tls               Specify the path for a CA certificate to use when connecting with TLS. If required by the brocker, specify also the path to a client certificate and key with, respectively, the "--cert" and "--key" options
+-h, --help            show this help message and exit
+-p PORT               Specify the port (defaults to 1883)
+-t LISTENING_TIME     Specify the amount of seconds the tool should intercept messages on wildcard topics (defaults to 60)
+-m TEXT_MESSAGE       Specify the text message to publish in intercepted topics (defaults to "testtesttest")
+-fc DOS_FOODING_CONN  Specify the amount of connections for the flooding-based DoS (mandatory for flooding-based DoS)
+-fcsize DOS_SIZE      Specify the payload size in MB for the flooding-based DoS (defaults to 10)
+-sc DOS_SLOW_CONN     Specify the max amount of connections for the slow DoS - 12000 suggested (mandatory for slow DoS)
+-u USERNAME           Specify the username (mandatory for Brute-forcing)
+-w WORDLIST_PATH      Specify the path to the password wordlist
+-i INTERFACE          Specify the interface on which to listen for MQTT packets (mandatory for Sniffing)
+-ca CA_CERT           Specify the CA certificate path (mandatory for connecting with TLS)
+-cert CLIENT_CERT     Specify the client certificate path
+-key CLIENT_KEY       Specify the client key path
+--md                  Add flag --md to perform the malformed data test
+--ni                  Add flag --ni to perform only non intrusive tests
 ```
 
 When the analysis is complete, a pdf (called `report.pdf`) is created. In these report are listed the results of the attacks performed by MQTTSA and, based on these results, some high level suggestions to improve the security of the MQTT instance.
 
 ## Attacks
 
-The attacks implemented are the following:
+The attacks implemented (that can be run individually from the `/src/` folder) are the following:
 
 - Sniffing attack
 - Brute Force
@@ -41,20 +44,22 @@ The attacks implemented are the following:
 
 ### Sniffing attack
 
-Use the specified interface to intercept MQTTSA packets and look for credentials (*client ids* or *usernames*). In case these are found, the tool will use them to try to connect to the broker.
+Use the specified interface to intercept MQTT connect packets for credentials: *client ids*, *usernames* and *passwords*. In case these are found, the tool will use them to perform the other attacks (e.g., connect and intercept messages).
 
 ### Brute force
 
-Use the given username and wordlist to perform a bruteforce attack. A simple wordlist is provided (`/src/words.txt`).
+Use the given username and wordlist to perform a bruteforce attack. An example wordlist is provided in `/src/words.txt`.
 
 ### Information disclosure
 
-The tool will try to intercept messages coming from the MQTT broker and identify the vulnerable topics. In case the *non intrusive* mode is not specified, the tool will also try to write in this topic, to check if attackers will be able to send messages on the vulnerable topics.
+Once the tool manages to connect to the broker, it listens for and parses each received message according to 10 patterns: domain names, IPs and MACs, email addresses, passwords, phone numbers, credit cards and messages containing typical IoT, status and GPS keywords. In case the *non intrusive* mode is specified, it will not attempt to detect ACLs; otherwise it will try to publish on listened topics and wait for the test messages to be received.
 
 ### Malformed data
 
-The tool will try to craft malformed packets to try to raise some errors in the broker. **This attack might affect the performance of the broker, so do not perform this attack in critical scenarios**.
+The tool will try to craft malformed packets to try to raise some exceptions in the broker. **This attack might affect the performance of the broker, so do not perform this attack in critical scenarios**.
 
 ### Denial of Service
 
-The tool will send **many** requests to exhaust the broker resources and check if this creates a notable delay. **This attack might affect the performance of the broker, so do not perform this attack in critical scenarios**.
+The tool will first attempt to saturate the number of connection (*slow* DoS approach - Ref. to [1] for additional details); then damage the service quality by publishing with many clients heavy payloads. **This attack might affect the performance of the broker, so do not perform this attack in critical scenarios**.
+
+[[1] Vaccari, Ivan & Aiello, Maurizio & Cambiaso, Enrico. (2020). SlowITe, a Novel Denial of Service Attack Affecting MQTT. Sensors. 20. 2932. 10.3390/s20102932](https://www.researchgate.net/publication/341563324_SlowITe_a_Novel_Denial_of_Service_Attack_Affecting_MQTT). 

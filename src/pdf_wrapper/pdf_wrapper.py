@@ -36,9 +36,8 @@ def add_paragraph(title, msg=None):
         html += '<h2 align="left">'+title+'</h2>'
        
 # Create summary table
-def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, DoS, Brute, outdated, implements_TLS, disclosure, weak_ac, no_pass, cred_sniffed_or_bruteforced, client_key):
+def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, F_DoS, FSize_DoS, S_DoS, Brute, outdated, implements_TLS, disclosure, weak_ac, no_pass, cred_sniffed_or_bruteforced, client_key):
     global html
-    
     Rating = 0
     
     # If it managed to connect (excluding when provided with X.509 certificates)
@@ -76,7 +75,7 @@ def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, DoS, Brute
         '      <th width="50%"><center>Vulnerabilities</center></th>'\
         '    </tr>'\
         '    <tr width="100%">'\
-        '      <td width="25%">Broker IP and port</td>'\
+        '      <td width="25%">Broker host and port</td>'\
         '      <td width="25%">'+ IP +':'+ Port +'</td>'\
         '      <td width="25%">&nbsp;&nbsp;&nbsp;Outdated Broker</td>'\
         '      <td width="25%"><center>' + outdated + '</center></td>'\
@@ -101,14 +100,20 @@ def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, DoS, Brute
         '        <td width="25%">' + MD + '</td>'\
         '        <td width="50%">&nbsp;&nbsp;&nbsp;or weak Access Control</td></tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">DoS connections</td>'\
-        '        <td width="25%">' + DoS + '</td>'\
+        '        <td width="25%">Brute-forcing</td>'\
+        '        <td width="25%">' + Brute + '</td>'\
         '        <td width="25%">&nbsp;&nbsp;&nbsp;Overall risk</td>'\
         '        <td width="25%"><center>'+ Rating +'</center></td></tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">Brute-forcing</td>'\
-        '        <td width="25%">' + Brute + '</td>'\
-        '</table>' +"<font size="+str(font_size)+"><br>*: False if not providing X.509 certificates or according to the broker implementation (e.g., Mosquitto). Verify with TLS Assistant (<a href=\"https://github.com/stfbk/tlsassistant\">https://github.com/stfbk/tlsassistant</a>).</font><br></p><br>"
+        '        <td width="25%">Flooding DoS conn.</td>'\
+        '        <td width="25%">' + F_DoS + '</td></tr>'\
+        '    <tr width="100%">'\
+        '        <td width="25%">- Payload size</td>'\
+        '        <td width="25%">' + FSize_DoS + '</td></tr>'\
+        '    <tr width="100%">'\
+        '        <td width="25%">Slow DoS conn.</td>'\
+        '        <td width="25%">' + S_DoS + '</td></tr>'\
+        '</table>' +"<font size="+str(font_size)+">*: False if not providing X.509 certificates or according to the broker implementation (e.g., Mosquitto). Verify with TLS Assistant (<a href=\"https://github.com/stfbk/tlsassistant\">https://github.com/stfbk/tlsassistant</a>).</font><br></p><br>"
 
 # append a sub-paragraph to the HTML
 def add_sub_paragraph(title, msg=None):
