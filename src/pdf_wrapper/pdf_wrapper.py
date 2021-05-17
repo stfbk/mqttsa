@@ -36,7 +36,7 @@ def add_paragraph(title, msg=None):
         html += '<h2 align="left">'+title+'</h2>'
        
 # Create summary table
-def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, F_DoS, FSize_DoS, S_DoS, Brute, outdated, implements_TLS, disclosure, weak_ac, no_pass, cred_sniffed_or_bruteforced, client_key):
+def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, F_DoS, FSize_DoS, S_DoS, DoS_data, Brute, outdated, implements_TLS, disclosure, weak_ac, no_pass, cred_sniffed_or_bruteforced, client_key):
     global html
     Rating = 0
     
@@ -52,6 +52,40 @@ def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, F_DoS, FSi
         if(cred_sniffed_or_bruteforced):
             Rating += 4
 
+    print(f"DOS DATA: {DoS_data}")
+    
+    if(DoS_data):
+        if(DoS_data[0]==DoS_data[1]):
+            queue_string = f"Yes ({DoS_data[0]}/{DoS_data[1]} messages)"
+            Rating -= 1
+        elif(DoS_data[1] == None):
+            queue_string = "Skipped"
+        else:
+            queue_string = f"No ({DoS_data[0]}/{DoS_data[1]} messages)"
+            Rating += 1
+        
+        if(DoS_data[2]==DoS_data[3]):
+            payload_string = f"Yes (up to {DoS_data[2]}MB message)"
+            Rating -= 2
+        elif(DoS_data[3] == None):
+            payload_string = "Skipped"
+        else:
+            payload_string = f"No (max {DoS_data[2]}MB message)"
+            Rating += 2
+        
+        if(DoS_data[4]==DoS_data[5]):
+            connection_string = f"Yes ({DoS_data[4]} conn. accepted)"
+            Rating -= 1
+        elif(DoS_data[5] == None):
+            connection_string = "Skipped"
+        else:
+            connection_string = f"No (max {DoS_data[4]} conn. accepted)"
+            Rating += 1
+    else:
+        queue_string = "Skipped"
+        payload_string = queue_string
+        connection_string = queue_string
+        
     # E.g., when providing only CA certificate
     if(implements_TLS):
         Rating -= 4
@@ -84,36 +118,50 @@ def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, F_DoS, FSi
         '        <td width="25%">Listening time</td>'\
         '        <td width="25%">' + Listening + ' seconds </td>'\
         '        <td width="25%">&nbsp;&nbsp;&nbsp;Use of TLS</td>'\
-        '        <td width="25%"><center>'+ str(implements_TLS) +'*</center></td></tr>'\
+        '        <td width="25%"><center>'+ str(implements_TLS) +'*</center></td>'\
+        '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Message to send</td>'\
         '        <td width="25%">' + Msg + '</td>'\
         '        <td width="25%">&nbsp;&nbsp;&nbsp;Information Disclosure</td>'\
-        '        <td width="25%"><center>'+ disclosure +'</center></td></tr>'\
+        '        <td width="25%"><center>'+ disclosure +'</center></td>'\
+        '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Sniffing interface</td>'\
         '        <td width="25%">' + Interface + '</td>'\
         '        <td width="25%">&nbsp;&nbsp;&nbsp;Accessible service</td>'\
-        '        <td width="25%"><center>'+ str(weak_ac) +'</center></td></tr>'\
+        '        <td width="25%"><center>'+ str(weak_ac) +'</center></td>'\
+        '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Data/Msg tampering</td>'\
         '        <td width="25%">' + MD + '</td>'\
-        '        <td width="50%">&nbsp;&nbsp;&nbsp;or weak Access Control</td></tr>'\
+        '        <td width="50%">&nbsp;&nbsp;&nbsp;or weak Access Control</td>'\
+        '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Brute-forcing</td>'\
         '        <td width="25%">' + Brute + '</td>'\
-        '        <td width="25%">&nbsp;&nbsp;&nbsp;Overall risk</td>'\
-        '        <td width="25%"><center>'+ Rating +'</center></td></tr>'\
+        '        <td width="25%">&nbsp;&nbsp;&nbsp;Unlimited** payload</td>'\
+        '        <td width="25%">' + payload_string + '</td>'\
+        '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Flooding DoS conn.</td>'\
-        '        <td width="25%">' + F_DoS + '</td></tr>'\
+        '        <td width="25%">' + F_DoS + '</td>'\
+        '        <td width="25%">&nbsp;&nbsp;&nbsp;Unlimited** connections</td>'\
+        '        <td width="25%">' + connection_string + '</td>'\
+        '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">- Payload size</td>'\
-        '        <td width="25%">' + FSize_DoS + '</td></tr>'\
+        '        <td width="25%">' + FSize_DoS + '</td><'\
+        '        <td width="25%">&nbsp;&nbsp;&nbsp;Unlimited** msg queues</td>'\
+        '        <td width="25%">' + queue_string + '</td>'\
+        '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Slow DoS conn.</td>'\
-        '        <td width="25%">' + S_DoS + '</td></tr>'\
-        '</table>' +"<font size="+str(font_size)+">*: False if not providing X.509 certificates or according to the broker implementation (e.g., Mosquitto). Verify with TLS Assistant (<a href=\"https://github.com/stfbk/tlsassistant\">https://github.com/stfbk/tlsassistant</a>).</font><br></p><br>"
+        '        <td width="25%">' + S_DoS + '</td>'\
+        '        <td width="25%">&nbsp;&nbsp;&nbsp;Overall risk</td>'\
+        '        <td width="25%"><center>'+ Rating +'</center></td>'\
+        '    </tr>'\
+        '</table>' +"<font size="+str(font_size)+">*: False if not providing X.509 certificates or according to the broker implementation (e.g., Mosquitto). Verify with TLS Assistant (<a href=\"https://github.com/stfbk/tlsassistant\">https://github.com/stfbk/tlsassistant</a>).<br>**: With respect to provided parameters.</font><br></p><br>"
 
 # append a sub-paragraph to the HTML
 def add_sub_paragraph(title, msg=None):

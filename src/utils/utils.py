@@ -10,6 +10,8 @@ def create_parser():
     
     parser.add_argument('-p', dest='port', type=int, help='Specify the port (defaults to 1883)')
     
+    parser.add_argument('-v', dest='version', type=str, default = '3.1.1', help='Specify the protocol version (3.1.1 by default)')
+    
     parser.add_argument('-t', dest='listening_time', type=int, help='Specify the amount of seconds the tool should intercept messages on wildcard topics (defaults to 60)')
 
     parser.add_argument('-m', dest='text_message', type=str, help='Specify the text message to publish in intercepted topics (defaults to "testtesttest")')
@@ -19,6 +21,10 @@ def create_parser():
     parser.add_argument('-fcsize', dest='dos_size', type=int, default = 10, help='Specify the payload size in MB for the flooding-based DoS (defaults to 10)')
     
     parser.add_argument('-sc', dest='dos_slow_conn', type=int, help='Specify the max amount of connections for the slow DoS - 12000 suggested (mandatory for slow DoS)')
+    
+    parser.add_argument('-mq', dest='max_queue', type=int, help='Specify the number of messages to test the max number of messages queued by the browser - 1000 suggested (mandatory to perform the test)')
+    
+    parser.add_argument('-mp', dest='max_payload', type=int, help='Specify the payload size to test the max supported payload - 255 suggested (mandatory to perform the test)')
     
     parser.add_argument('-u', dest='username', type=str, help='Specify the username (mandatory for Brute-forcing)')
 

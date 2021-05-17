@@ -8,7 +8,7 @@ on the results of the attacks performed by MQTTSA.
 outdated_broker = "No"
 
 # Authentication mechanism section
-def authentication_report(pdfw, no_authentication, broker_info, credentials_sniffed, credentials_bruteforced, interface):
+def authentication_report(pdfw, no_authentication, broker_info, credentials_sniffed, credentials_bruteforced, interface, host, port):
     pdfw.add_paragraph("Authentication")
 
     # No authentication mechanism detected -> write mitigations
@@ -28,7 +28,45 @@ def authentication_report(pdfw, no_authentication, broker_info, credentials_snif
         
         if (broker_info != None):
             if ("mosquitto" in broker_info):
-                pdfw.add_to_existing_paragraph('Please follow those <a href="https://primalcortex.wordpress.com/2016/11/08/mqtt-mosquitto-broker-client-authentication-and-client-certificates/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a>. An excerpt of a configuration file is provided below:<font size=6><p>     listener 8883<br/>     cafile /etc/mosquitto/certs/ca.crt<br/>     certfile /etc/mosquitto/certs/hostname.crt<br/>     keyfile /etc/mosquitto/certs/hostname.key<br/>     require_certificate true<br/>     use_identity_as_username true<br/>     crlfile /etc/mosquitto/certs/ca.crl</p></font>')
+                pdfw.add_to_existing_paragraph('Please modify Mosquitto\'s configuration ("/etc/mosquitto/mosquitto.conf" by default) according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a>. For further authentication or authorization mechanisms refer to <a href="https://github.com/iegomez/mosquitto-go-auth">mosquitto-go-auth</a>. An excerpt of "mosquitto.conf" is provided below:<br><font size=7> <p>\
+                listener '+str(port)+' '+str(host)+'          #Binds Mosquitto to a specific IP/Port<br>\
+                cafile   &lt; path to the certificate authority certificate &gt;     #Tipically /etc/mosquitto/certs/ca.crt<br>\
+                certfile &lt; path to Mosquitto X.509 certificate &gt;               #Tipically /etc/mosquitto/certs/hostname.crt<br>\
+                keyfile  &lt; path to Mosquitto private key &gt;                       #Tipically /etc/mosquitto/certs/hostname.key<br>\
+                crlfile  &lt; path to Mosquitto certificate revocation list &gt;   #Tipically /etc/mosquitto/certs/ca.crl<br>\
+                require_certificate true                    #The client must present a certificate<br>\
+                use_identity_as_username true       #- And the certificate Common Name (CN) is used as username<br>\
+                use_username_as_clientid true       #- And the username is used as the unique client ID<br>\
+                </p></font>')
+                
+                pdfw.add_to_existing_paragraph('By using "require_certificate", an attacker need to have access to a valid certificate (and the corresponding private key), rather than the less secure username and password (that can be possibly bruteforced). In addition, by indicating both "use_identity_as_username" and "use_username_as_clientid", an attacker that steals and use the client certificate (and the key) cannot be connected together with the client (as the client ID is unique); hence, the client will be disconnected and possibly detect the attack. Upon detection (or if the client is not authorised anymore), the certificate can be revoked via the certificate revocation list.')
+            elif ("verne" in broker_info):
+                pdfw.add_to_existing_paragraph('Please modify VerneMQ\'s configuration ("/etc/vernemq/vernemq.conf" by default) according to the <a href="https://docs.vernemq.com/configuration/introduction">official documentation</a>. For supported authentication or authorization mechanisms refer to <a href="https://docs.vernemq.com/configuration/file-auth">file-based</a> authentication and authorization, or <a href="https://docs.vernemq.com/configuration/db-auth">database-oriented</a> option. An excerpt of the important options to set or verify in "vernemq.conf" is provided below:<br><font size=7> <p>\
+                allow_anonymous = off                             #Prevents connections from unauthenticated clients<br>\
+                allow_multiple_sessions = off                    #Would allow multiple clients with the same client ID<br>\
+                listener.ssl.default = '+str(host)+':'+str(port)+' #Enforces the use of TLS (via the ssl listener)<br>\
+                listener.ssl.cafile = &lt; path to the certificate authority certificate &gt;     #Tipically /etc/vernemq/ca.crt<br>\
+                listener.ssl.certfile = &lt; path to VerneMQ X.509 certificate &gt;                #Tipically /etc/vernemq/server.crt<br>\
+                listener.ssl.keyfile = &lt; path to VerneMQ private key &gt;                        #Tipically /etc/vernemq/server.key<br>\
+                listener.ssl.crlfile = &lt; path to VerneMQ certificate revocation list &gt;   #To be set e.g., as /etc/vernemq/ca.crl<br>\
+                listener.ssl.require_certificate = on                    #The client must present a certificate<br>\
+                listener.ssl.use_identity_as_username = on       #- And the certificate Common Name (CN) is used as username<br>\
+                </p></font>')
+                pdfw.add_to_existing_paragraph('By using "require_certificate", an attacker need to have access to a valid certificate (and the corresponding private key), rather than the less secure username and password (that can be possibly bruteforced). The "crlfile" is used in case the certificate is compromised')
+            elif ("emqx" in broker_info):
+                pdfw.add_to_existing_paragraph('Please modify EMQ X\'s configuration ("/etc/emqx/emqx.conf" by default) according to the <a href="https://docs.emqx.io/en/broker/v4.3/getting-started/config.html">official documentation</a>. For supported authentication or authorization mechanisms refer to the <a href="https://docs.emqx.io/en/broker/v4.3/advanced/auth.html">authentication</a> section. An excerpt of the important options to set or verify in "emqx.conf" is provided below:<br><font size=7> <p>\
+                allow_anonymous = false                               #Prevents connections from unauthenticated clients<br>\
+                listener.ssl.external = '+str(host)+':'+str(port)+'   #Enforces the use of TLS (via the ssl listener)<br>\
+                listener.ssl.external.cacertfile = &lt; path to the certificate authority certificate &gt;     #Tipically /etc/emqx/certs/cacert.pem<br>\
+                listener.ssl.external.certfile &lt; path to VerneMQ X.509 certificate &gt;                   #Tipically /etc/emqx/certs/cert.pem<br>\
+                listener.ssl.external.keyfile  &lt; path to VerneMQ private key &gt;                           #Tipically /etc/emqx/certs/key.pem<br>\
+                listener.ssl.crlfile  &lt; path to VerneMQ certificate revocation list &gt;            #To be set e.g., as /etc/vernemq/ca.crl<br>\
+                listener.ssl.external.fail_if_no_peer_cert = true                    #The client must present a certificate<br>\
+                listener.ssl.external.verify = verify_peer                             #- And the certificate chain is valid <br>\
+                listener.ssl.external.peer_cert_as_username = cn          #- Use the CN, DN or CRT field from the client certificate as a username<br>\
+                zone.external.use_username_as_clientid = true             #- And the username is used as the unique client ID<br>\
+                </p></font>')
+                pdfw.add_to_existing_paragraph('By using "fail_if_no_peer_cert", an attacker need to have access to a valid certificate (and the corresponding private key), rather than the less secure username and password (that can be possibly bruteforced). In addition, by indicating both "peer_cert_as_username" and "use_username_as_clientid", an attacker that steals and use the client certificate (and the key) cannot be connected together with the client (as the client ID is unique); hence, the client will be disconnected and possibly detect the attack. Upon detection (or if the client is not authorised anymore), the certificate can be revoked via the certificate revocation list.')
         else:
             pdfw.add_to_existing_paragraph('Refer here for additional informations:')
             pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-x509-client-certificate-authentication">MQTT Security Fundamentals: X509 Client Certificate Authentication</a>')
@@ -65,7 +103,14 @@ def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, li
         
         if (broker_info != None):
             if ("mosquitto" in broker_info):
-                pdfw.add_to_existing_paragraph('If restricting access via ACLs, please follow those <a href="http://www.steves-internet-guide.com/topic-restriction-mosquitto-configuration/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a>. For instance, integrate the <i>acl_file</i> parameter (<i>acl_file /mosquitto/config/acls</i>) and restict a client to interact only on topics with his clientname as prefix (ACL <i>pattern readwrite topic/%c/#</i>)')
+                pdfw.add_to_existing_paragraph('If restricting access via ACLs, please follow those <a href="http://www.steves-internet-guide.com/topic-restriction-mosquitto-configuration/">guidelines</a> and modify Mosquitto\'s configuration according to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a>. For instance, integrate the <i>acl_file</i> parameter (<i>acl_file /mosquitto/config/acls</i>) and restict a client to interact only on topics with his clientname as prefix (ACL <i>pattern readwrite topic/%c/#</i>).')
+                pdfw.add_to_existing_paragraph('In addition, consider the adoption of TLS 1.3 by setting <i>tls_version tlsv1.3</i> in "mosquitto.conf" - the strongest cipher is used by default, but the client may require a weak one: use <i>ciphers_tls1.3</i> in "mosquitto.conf" to indicate a <a href="https://wiki.mozilla.org/Security/Server_Side_TLS">secure cipher list</a> (if not working, use TLS 1.2 and the <i>ciphers</i> parameter).')
+            elif ("verne" in broker_info):
+                pdfw.add_to_existing_paragraph('If restricting access via ACLs, please modify VerneMQ\'s configuration according to the <a href="https://docs.vernemq.com/configuration/file-auth">official documentation</a>. For instance, integrate in <i>vmq.acl</i> a policy per client that consider its <a href="https://docs.vernemq.com/configuration/file-auth#simple-acl-example">username</a>.')
+                pdfw.add_to_existing_paragraph('In addition, consider the adoption of TLS 1.2 by setting <i>listener.ssl.tls_version = tlsv1.2</i> in "vernemq.conf" - the strongest cipher is used by default, but the client may require a weak one: use <i>listener.ssl.ciphers</i> in "vernemq.conf" to indicate a <a href="https://wiki.mozilla.org/Security/Server_Side_TLS">secure cipher list</a>.')
+            elif ("emqx" in broker_info):
+                pdfw.add_to_existing_paragraph('If restricting access via ACLs, please modify EMQ X\'s configuration according to the <a href="https://docs.emqx.io/en/broker/v4.3/advanced/acl.html#acl-plugins">official documentation</a>. For instance, add a username-based rule, remove <i>{allow, all}.</i> and set <i>acl_nomatch = deny</i> in "emqx.conf" to effectively use ACLs; the documentation provide additional setting such as the behaviour (by default ignore but not disconnect the client).')
+                pdfw.add_to_existing_paragraph('In addition, consider the adoption of TLS 1.2 by setting <i>listener.wss.external.tls_versions = tlsv1.2</i> in "emqx.conf" - the strongest cipher is used by default, but the client may require a weak one: use <i>listener.wss.external.ciphers</i> in "emqx.conf" to indicate a <a href="https://wiki.mozilla.org/Security/Server_Side_TLS">secure cipher list</a>.')
         else: 
             # additional information section
             pdfw.add_to_existing_paragraph('Additional information here:')
@@ -135,12 +180,12 @@ def fingerprinting_report(pdfw, broker_info):
                 outdated_broker = "Yes"
             else:
                 pdfw.add_to_existing_paragraph('VerneMQ version is up-to-date.')
-        elif ("emq" in broker_info):
+        elif ("emqx" in broker_info):
             if (not brokers ["emqx"] in broker_info):
-                pdfw.add_to_existing_paragraph('<b>[!]EMQ version is not updated</b>: please refer to the last <a href="http://emqtt.io/changelogs">Change log</a> for bugs and security issues.')
+                pdfw.add_to_existing_paragraph('<b>[!]EMQ X version is not updated</b>: please refer to the last <a href="http://emqtt.io/changelogs">Change log</a> for bugs and security issues.')
                 outdated_broker = "Yes"
             else:
-                pdfw.add_to_existing_paragraph('EMQ version is up-to-date.')
+                pdfw.add_to_existing_paragraph('EMQ X version is up-to-date.')
         elif ("adafruit" in broker_info):
             if (not brokers ["adafruit"] in broker_info):
                 pdfw.add_to_existing_paragraph('<b>[!]Adafruit IO version is not updated</b>: please refer to the last <a href="https://io.adafruit.com/blog/">Change log</a> for bugs and security issues.')
@@ -242,7 +287,7 @@ def brute_force_report(pdfw, username, wordlist, password, no_pass):
         pdfw.add_to_existing_paragraph('<a href="https://thingsboard.io/docs/user-guide/certificates/">ThingsBoard: X.509 Certificate Based Authentication</a>')
 
 # Denial of Service section
-def dos_report(pdfw, dos_flooding_connections, dos_flooding_size, connection_difference, percentage_increment, dos_slow_connections, slow_connection_difference, broker_info):
+def dos_report(pdfw, dos_flooding_connections, dos_flooding_size, connection_difference, percentage_increment, dos_slow_connections, slow_connection_difference, max_queue, tested_max_queue, max_payload, tested_max_payload, broker_info):
     pdfw.add_paragraph("Denial of service")
     
     # Report if flooding-based DoS has been performed
@@ -266,11 +311,40 @@ def dos_report(pdfw, dos_flooding_connections, dos_flooding_size, connection_dif
     
     if (broker_info != None):
         if ("mosquitto" in broker_info):
-            pdfw.add_to_existing_paragraph('In Mosquitto it is possible to set the <i>persistent_client_expiration</i>, <i>message_size_limit</i> and <i>max_connections</i> parameters in the configuration file (eg. to, respecively, 1h, 5120 and 5). It is also possible to restrict the use of credentials to a single client by using <i>use_username_as_clientid</i> parameter. If supporting certificate-based authentication, use it in conjunction with the <i>use_identity_as_username</i> or <i>use_subject_as_username</i> parameters. Refer to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> for details')
-    
+            pdfw.add_to_existing_paragraph('In Mosquitto it is possible to limit in accordance with the use case:<br><br>\
+    <b>The messages size</b> with <i>max_inflight_bytes</i>,  <i>max_packet_size</i> and <i>message_size_limit</i>;<br>\
+    <b>The message rate</b> with <i>max_inflight_messages</i>;<br>\
+    <b>The active connections</b> with <i>max_connections</i> and <i>persistent_client_expiration</i> ;<br>\
+    <b>The number of messages queued by the broker</b> with <i>max_queued_messages</i>, <i>max_queued_bytes</i>, <i>upgrade_outgoing_qos (M)</i> and <i>queue_qos0_messages (M)</i>;<br>\
+    <b>The logging level</b> with log_dest (M);<br>\
+    <b>The Memory use</b> with <i>memory_limit</i>;<br>\
+    <b>Prevent Slow DoS</b> with <i>max_keepalive</i>.<br>')
+
+            pdfw.add_to_existing_paragraph('The (M) notation indicates that the parameter is considered secure by-default. Refer to the <a href="https://mosquitto.org/man/mosquitto-conf-5.html">official documentation</a> for further details. Retained messages can be disabled via <i>retain_available</i> and <i>check_retain_source (M)</i> allows to avoid the sending of retained messages from clients whose access have been revoked.')
+        elif ("verne" in broker_info):
+            pdfw.add_to_existing_paragraph('In VerneMQ it is possible to limit in accordance with the use case:<br><br>\
+    <b>The messages size</b> with <i>max_message_size</i> and <i>tcp.buffer_sizes</i>;<br>\
+    <b>The message rate</b> with <i>max_inflight_messages</i> and <i>max_message_rate</i>;<br>\
+    <b>The active connections</b> with <i>max_connections</i>, <i>persistent_client_expiration</i> and <i>allow_multiple_sessions (M)</i>;<br>\
+    <b>The number of messages queued by the broker</b> with <i>max_online_messages</i>, <i>max_offline_messages</i> and <i>upgrade_outgoing_qos (M)</i>;<br>\
+    <b>The logging level</b> with <i>log.console.level</i>;<br>\
+    <b>The CPU multi-processing and memory use</b> with <i>nr_of_acceptors</i> and <i>maximum_memory.percent</i> (respectively).<br>')
+
+            pdfw.add_to_existing_paragraph('The (M) notation indicates that the parameter is considered secure by-default; "*." that is applied to the listener (that constitutes the prefix). Refer to the <a href="https://docs.vernemq.com/configuration/introduction">official documentation</a> for further details. Retained messages cannot be disabled but the retry interval for QoS 1 and 2 messages can be delayed (with <i>retry_interval</i>).')
+        elif ("emqx" in broker_info):
+            pdfw.add_to_existing_paragraph('In EMQ X it is possible to limit in accordance with the use case:<br><br>\
+    <b>The messages size</b> with the settings <i>*.max_packet_size (M)</i>, <i>*.rate_limit.conn_bytes_in (M)</i>, <i>*.tcp.external.buffer (*.tcp.external.recbuf and *.tcp.external.sndbuf)</i> and <i>*.ws.external.max_frame_size</i> (if using the WebSockets);<br>\
+    <b>The message rate</b> with the setting <i>*.max_inflight</i>;<br>\
+    <b>The active connections</b> with the settings <i>*.tcp.external.max_connections</i>, <i>*.tcp.external.active_n</i>, <i>*.tcp.external.max_conn_rate</i>, <i>*.rate_limit.conn_messages_in</i> and <i>*.session_expiry_interval</i>;<br>\
+    <b>The number of messages queued by the broker</b> with the settings <i>*.max_mqueue_len</i> and <i>*.force_shutdown_policy</i>. Remember also to disable the use of queues for QoS 0 messages (<i>mqueue_store_qos0</i>) if not necessary;<br>\
+    <b>The logging level</b> with <i>log.to</i>, <i>log.chars_limit</i>, <i>log.$level (M)</i>, <i>log.sync_mode_qlen (M)</i>, <i>log.drop_mode_qlen (M)</i>, <i>log.flush_qlen (M)</i>, <i>log.overload_kill (M)</i>, <i>log.overload_kill_qlen (M) and <i>log.burst_limit (M)</i>;<br>\
+    <b>The CPU multi-processing and memory use</b> with <i>*.tcp.external.acceptors</i>, <i>node.async_threads</i>, <i>node.process_limit</i>, <i>node.dist_buffer_size</i>, <i>node.max_ets_tables</i>, <i>node.global_gc_interval and node.fullsweep_after</i>,  log.overload_kill_mem_size (M)</i>, <i>*.force_gc_policy</i> and <i>*.force_shutdown_policy</i>;<br>\
+    <b>Prevent Slow DoS</b> with <i>*.server_keepalive and .keepalive_backoff (M)</i>, <i>max_awaiting_rel and await_rel_timeout</i> and <i>external.send_timeout and tcp.external.send_timeout_close (M)</i>.<br>')
+
+            pdfw.add_to_existing_paragraph('The (M) notation indicates that the parameter is considered secure by-default; "*." that is applied to the listener (that constitutes the prefix). Refer to the <a href="https://docs.emqx.io/en/broker/v4.3/getting-started/config.html">official documentation</a> for further details. Retained messages can be disabled via <i>mqtt.retain_available</i> and the retry interval for QoS 1 and 2 messages set with the <i>*.retry_interval</i> parameter. Try also to set suitable threasholds on the host resources (sysmon.*, os_mon.*, vm_mon.*) and the corresponding alarms.')
+                
     pdfw.add_to_existing_paragraph('Additional information here:')
     pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems">MQTT Security Fundamentals: Securing MQTT Systems</a>')
-    pdfw.add_to_existing_paragraph('<a href="https://en.wikipedia.org/wiki/Password_strength">Mosquitto documentation: message_size_limit and max_connection</a>')
 
 
 # Malformed data section

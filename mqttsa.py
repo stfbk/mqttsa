@@ -13,7 +13,7 @@ import paho.mqtt.client as mqtt
 import os, ssl, sys
 
 # Function called after MQTTSA connects with the broker, whether the connection was successful or not
-def on_connect(client, userdata, flags, rc):
+def on_connect_3(client, userdata, flags, rc):
 
     # Set to True if the authentication is not required
     global no_authentication
@@ -78,7 +78,12 @@ def on_connect(client, userdata, flags, rc):
         #print("Connection refused, not authorized")
         pass
 
-# function called after the reception of a message
+def on_connect_5(client, userdata, flags, reasonCode, properties):
+    if (properties):
+        print("- Properties from the broker"+ str(properties))
+    on_connect_3(client, userdata, flags, reasonCode.value)
+
+# Function called after the reception of a message
 def on_message(client, userdata, message):
 
     # set of readable topics
@@ -234,28 +239,34 @@ def save_messages(mac_address, ipv4, domain_names, email, passw, iot, msg, statu
     if raw_messages:
         save_list(raw_messages, 'raw_messages')
 
-def connect_listen_publish(broker_address, port, credentials, cert_key_paths, state):
+def connect_listen_publish(broker_address, version, port, credentials, cert_key_paths, state):
     global listening_time
     global non_intrusive
     global topics_readable
     global sys_topics_readable
     
+    protocol_version = mqtt.MQTTv5 if version == '5' else mqtt.MQTTv311
+    
     #If providing credentials use them to configure the client (client ID might not be provided)
     if(credentials != None and not credentials.empty):
         if (credentials.clientID != None):
-            client = mqtt.Client(credentials.clientID, userdata=state)
+            client = mqtt.Client(credentials.clientID, userdata=state, protocol = protocol_version)
         else:
-            client = mqtt.Client(userdata=state) 
+            client = mqtt.Client(userdata=state, protocol = protocol_version) 
         client.username_pw_set(credentials.username, credentials.password)
     else:
-        client = mqtt.Client(userdata=state) 
+        client = mqtt.Client(userdata=state, protocol = protocol_version) 
 
     #If providing certificates use them to configure TLS
     if(cert_key_paths!=None):
         client.tls_set(cert_key_paths[0], cert_key_paths[1], cert_key_paths[2], ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLS, ciphers=None)
         client.tls_insecure_set(True)       
         
-    client.on_connect = on_connect
+    if version == '5':
+        client.on_connect = on_connect_5
+    else:
+        client.on_connect = on_connect_3
+        
     client.on_message = on_message
     
     client.connect_async(broker_address, port, 60)
@@ -356,10 +367,13 @@ if __name__== "__main__":
     # Getting all command-line values parsing the arguments
     args = utils.create_parser().parse_args()
     broker_address            = args.broker_address
+    version                   = args.version
     listening_time            = args.listening_time
     dos_flooding_connections  = args.dos_fooding_conn
     dos_flooding_size         = args.dos_size
     dos_slow_connections      = args.dos_slow_conn
+    max_queue                 = args.max_queue
+    max_payload               = args.max_payload
     username                  = args.username
     wordlist_path             = args.wordlist_path
     text_message              = args.text_message
@@ -373,7 +387,7 @@ if __name__== "__main__":
     
     print('')
     
-    # printing errors or setting default values
+    # Printing errors or setting default values
     if (listening_time == None or listening_time < 1):
         print('[!] "t" parameter < 1 or not specified, setting listening time to 60s')
         listening_time = 60
@@ -384,7 +398,13 @@ if __name__== "__main__":
     if (dos_slow_connections == None or dos_slow_connections < 1):
         print('[!] "dos_slow_conn" parameter < 1 or not specified, no slow DoS attack')
         dos_slow_connections = None
-    
+    if (max_queue == None or max_queue < 1):
+        print('[!] "max_queue" parameter < 0 or null, no message queue test')
+        max_queue = None
+    if (max_payload == None or max_payload < 1):
+        print('[!] "max_payload" parameter < 0 or null, no payload size test')
+        max_payload = None
+        
     if (username == None):
         print('[!] "u" parameters not specified, no Bruteforce attack')
         do_bruteforce = False
@@ -429,26 +449,27 @@ if __name__== "__main__":
         print('[!] Performing only non-intrusive tests')
 
     # Print recap of tests
-    print('\n\n[*] TARGET:                   ' + str(args.broker_address))
-    print('[*] LISTENING TIME:           ' + str(listening_time))
-    print('[*] DOING DOS ATTACK:         ' + str(dos_flooding_connections != None or dos_slow_connections != None))
-    print('[*] DOING SNIFFING ATTACK:    ' + str(interface != None))
-    print('[*] DOING BRUTEFORCE:         ' + str(do_bruteforce))
-    print('[*] DOING MALFORMED DATA:     ' + str(malformed_data))
-    print('[*] TEXT MESSAGE              ' + text_message+'\n')
+    print('\n\n[*] TARGET:                      ' + str(args.broker_address))
+    print('[*] LISTENING TIME:              ' + str(listening_time))
+    print('[*] DOING DOS ATTACKS:           ' + str(dos_flooding_connections != None or dos_slow_connections != None))
+    print('[*] DETECTING MAX PAYLOAD/QUEUE: ' + str(max_queue != None or max_payload != None))
+    print('[*] DOING SNIFFING ATTACK:       ' + str(interface != None))
+    print('[*] DOING BRUTEFORCE:            ' + str(do_bruteforce))
+    print('[*] DOING MALFORMED DATA:        ' + str(malformed_data))
+    print('[*] TEXT MESSAGE                 ' + text_message+'\n')
 
     print("Attempting the connection without credentials or TLS")
-    connect_listen_publish(broker_address, port, None, None, 0)
+    connect_listen_publish(broker_address, version, port, None, None, 0)
 
     if (interface!=None):
         print("Attempting to intercept credentials on the " + interface + " adapter for "+ str(listening_time) +"s and use them to connect (unskippable)")
         credential_list = sniff.sniffing_attack(interface, listening_time, port)
         for cred in credential_list:
-            connect_listen_publish(broker_address, port, cred, None, 1)
+            connect_listen_publish(broker_address, version, port, cred, None, 1)
     
     if(ca_cert != None):
         print("Attempting the connection with certificate(s)")
-        connect_listen_publish(broker_address, port, None, [ca_cert, client_cert, client_key], 2)
+        connect_listen_publish(broker_address, version, port, None, [ca_cert, client_cert, client_key], 2)
     
     # If the user wants to perform the bruteforce and it is possible according to the return code
     # (the connection with no credentials failed and no credentials have been retrieved via the sniffing attack)
@@ -459,11 +480,11 @@ if __name__== "__main__":
         cred.add_username(username)
         
         print("Attempting the connection with only the username (set also as client ID)")
-        connect_listen_publish(broker_address, port, cred, None, 3)
+        connect_listen_publish(broker_address, version, port, cred, None, 3)
         
         if(ca_cert != None):
             print("-Also with provided certificates")
-            connect_listen_publish(broker_address, port, cred, [ca_cert, client_cert, client_key], 3)       
+            connect_listen_publish(broker_address, version, port, cred, [ca_cert, client_cert, client_key], 3)       
         
         if(no_pass):
             credential_list.append(cred)
@@ -472,19 +493,19 @@ if __name__== "__main__":
             print('\nPerforming brute force (press ctrl+c once to skip)')
             # Perform brute force: bruteforce_results is an array containing two variables, 
             # a boolean set to True if the attack was successful and the password's value if it was able to find it
-            bruteforce_results = bruteforce.brute_force(broker_address,port,username,wordlist_path, ca_cert, client_cert,client_key)
-            username_bug = bruteforce.username_bug(broker_address,port, ca_cert, client_cert, client_key)
+            bruteforce_results = bruteforce.brute_force(broker_address,version,port,username,wordlist_path, ca_cert, client_cert,client_key)
+            username_bug = bruteforce.username_bug(broker_address,version,port, ca_cert, client_cert, client_key)
 
             #Brute-force succesfull -> sniff some packets
             if(bruteforce_results[0]):
                 cred.add_password(bruteforce_results[1])
                 
                 print("Attempting the connection with: ["+ username +","+ bruteforce_results[1] +"]")
-                connect_listen_publish(broker_address, port, cred, None, 4)
+                connect_listen_publish(broker_address, version, port, cred, None, 4)
                 
                 if(ca_cert != None):
                     print("-Also with provided certificates")
-                    connect_listen_publish(broker_address, port, cred, [ca_cert, client_cert, client_key], 4)
+                    connect_listen_publish(broker_address, version, port, cred, [ca_cert, client_cert, client_key], 4)
                     
                 credential_list.append(cred)
 
@@ -502,34 +523,40 @@ if __name__== "__main__":
                 mal_data_topic = "Topic1" # check
                 
             print('\nPerforming malformed data on '+ mal_data_topic +' topic...\n')
-            mal_data = md.malformed_data(broker_address, port, mal_data_topic, ca_cert, client_cert, client_key, credential_list)
+            mal_data = md.malformed_data(broker_address, version, port, mal_data_topic, ca_cert, client_cert, client_key, credential_list)
         else:
             print("Skipping malformed-data test as the tool was not able to connect")
-            
-    # Perform the attack if flooding-based or slow DoS connections have been provided
-    if (dos_flooding_connections!=None or dos_slow_connections!=None):
+                 
+    # Perform the attack if flooding-based or slow DoS connections have been provided; or if investigating the max message queue/payload
+    if (dos_flooding_connections!=None or dos_slow_connections!=None or max_queue != None or max_payload != None):
         if (connected):
             print('\nPerforming Denial of Service...\n')
             # If there is a topic in which we can write we use that topic; if no credentials, pass an empty set
             if (len(topics_writable)!=0):
                 dos_result = dos.broker_dos(broker_address,
-                                                 port,
-                                                 credential_list[0] if(credential_list) else sniff.Credentials(),
-                                                 dos_flooding_connections,
-                                                 dos_flooding_size,
-                                                 dos_slow_connections,
-                                                 next(iter(topics_writable)),
-                                                 [ca_cert, client_cert, client_key])
+                                            version,
+                                            port,
+                                            credential_list[0] if(credential_list) else sniff.Credentials(),
+                                            dos_flooding_connections,
+                                            dos_flooding_size,
+                                            dos_slow_connections,
+                                            max_queue,
+                                            max_payload,
+                                            next(iter(topics_writable)),
+                                            [ca_cert, client_cert, client_key])
             # Otherwise we will use an empty string as the topic
             else:
                 dos_result = dos.broker_dos(broker_address,
-                                                 port,
-                                                 credential_list[0] if(credential_list) else sniff.Credentials(),
-                                                 dos_flooding_connections,
-                                                 dos_flooding_size,
-                                                 dos_slow_connections,
-                                                 "MQTTSA",
-                                                 [ca_cert, client_cert, client_key])
+                                            version,
+                                            port,
+                                            credential_list[0] if(credential_list) else sniff.Credentials(),
+                                            dos_flooding_connections,
+                                            dos_flooding_size,
+                                            dos_slow_connections,
+                                            max_queue,
+                                            max_payload,
+                                            "MQTTSA",
+                                            [ca_cert, client_cert, client_key])
         else:
             print("Skipping DoS test as the tool was not able to connect")
         
@@ -544,6 +571,7 @@ if __name__== "__main__":
         ("None") if (dos_flooding_connections == None or dos_result==None) else (str(dos_flooding_connections)),
         ("None") if (dos_flooding_connections == None or dos_result==None) else str(dos_flooding_size)+" MB",
         ("None") if (dos_slow_connections == None or dos_result==None) else (str(dos_slow_connections)),
+        [dos.max_queue, max_queue, dos.max_payload, max_payload, dos.connected, dos_slow_connections] if (dos.max_queue>0 or dos.max_payload>0 or dos.connected>0) else [],
         str(do_bruteforce),
         "Replace_up_to_date",
         (ca_cert != None),
@@ -553,11 +581,11 @@ if __name__== "__main__":
         credential_list,
         client_key
         )
-
+        
     # Print the results in the report only if it manages to connect
     if(connected):
         # Authentication mechanism results
-        write_results.authentication_report(pdfw, no_authentication, broker_info, credentials_sniffed, credentials_bruteforced, interface)
+        write_results.authentication_report(pdfw, no_authentication, broker_info, credentials_sniffed, credentials_bruteforced, interface, broker_address, port)
 
         # Information disclosure results
         write_results.information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, broker_info, no_authentication)
@@ -582,14 +610,16 @@ if __name__== "__main__":
             cred_string = []
             
         # Bruteforce results
-        if (do_bruteforce ):
+        if (do_bruteforce):
             write_results.brute_force_report(pdfw, username, wordlist_path, bruteforce_results[1], no_pass)
 
         # DoS results
-        if(dos_result != None and (dos_flooding_connections != None or dos_slow_connections != None)):
+        if(dos_result != None):
             write_results.dos_report(pdfw, 
                 dos_flooding_connections, dos_flooding_size, dos.connection_difference, dos.percentage_increment, 
                 dos_slow_connections,  dos.slow_connection_difference,
+                max_queue, dos.max_queue,
+                max_payload, dos.max_payload,
                 broker_info)
 
         # malformed data results
@@ -642,6 +672,11 @@ if __name__== "__main__":
         print('     + Slow DOS successful:              '+(("Skipped") if (dos_result == None) else str(dos.slow_connection_difference != 0)))
         print('         + Max supported connections:    '+str(dos_slow_connections-dos.slow_connection_difference))
         print('')
+
+    if(not max_queue == None or not max_payload == None):
+        print('     + Test for unlimited msg. queues or payload:')
+        print('         + # Max supported payload: ' + (f"{dos.max_payload}MB" if (max_payload) else "Skipped"))
+        print('         + # Messages queues:       ' + (f"{dos.max_queue}/{max_queue}" if (max_queue) else "Skipped"))
         
     if (do_bruteforce):
         print('     + Brute force successful:           '+str(bruteforce_results[0]))

