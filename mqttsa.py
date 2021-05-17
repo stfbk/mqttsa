@@ -124,7 +124,7 @@ def on_message(client, userdata, message):
             broker_info = payload
     else:
         if(not 'MQTTSA/Client_flooding' in topic):
-            topics_readable.add()
+            topics_readable.add(topic)
             #if(len(payload) < 1000 and not payload.startswith('DoSMessage')): # Avoid printing on console DoS messages or long ones
             print('Non-sys message received '+ payload)
 

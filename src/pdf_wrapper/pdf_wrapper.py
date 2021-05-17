@@ -52,8 +52,6 @@ def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, F_DoS, FSi
         if(cred_sniffed_or_bruteforced):
             Rating += 4
 
-    print(f"DOS DATA: {DoS_data}")
-    
     if(DoS_data):
         if(DoS_data[0]==DoS_data[1]):
             queue_string = f"Yes ({DoS_data[0]}/{DoS_data[1]} messages)"

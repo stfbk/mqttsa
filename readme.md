@@ -20,6 +20,8 @@ The following arguments allow to enable different attacks and customize the anal
 -fc DOS_FOODING_CONN  Specify the amount of connections for the flooding-based DoS (mandatory for flooding-based DoS)
 -fcsize DOS_SIZE      Specify the payload size in MB for the flooding-based DoS (defaults to 10)
 -sc DOS_SLOW_CONN     Specify the max amount of connections for the slow DoS - 12000 suggested (mandatory for slow DoS)
+-mq MAX_QUEUE         Specify the number of messages to test the max number of messages queued by the browser - 1000 suggested (mandatory to perform the test)
+-mp MAX_PAYLOAD       Specify the payload size to test the max supported payload - 255 suggested (mandatory to perform the test)
 -u USERNAME           Specify the username (mandatory for Brute-forcing)
 -w WORDLIST_PATH      Specify the path to the password wordlist
 -i INTERFACE          Specify the interface on which to listen for MQTT packets (mandatory for Sniffing)
@@ -60,6 +62,6 @@ The tool will try to craft malformed packets to try to raise some exceptions in 
 
 ### Denial of Service
 
-The tool will first attempt to saturate the number of connection (*slow* DoS approach - Ref. to [1] for additional details); then damage the service quality by publishing with many clients heavy payloads. **This attack might affect the performance of the broker, so do not perform this attack in critical scenarios**.
+The tool will first attempt to saturate the number of connection (*slow* DoS approach - Ref. to [1] for additional details); then damage the service quality by publishing with many clients heavy payloads. **This attack might affect the performance of the broker, so do not perform this attack in critical scenarios**. In addition, it attempts to discover if the message payload size or the number of QoS 1 messages that the broker will queue (for persistent clients) have been limited.
 
 [[1] Vaccari, Ivan & Aiello, Maurizio & Cambiaso, Enrico. (2020). SlowITe, a Novel Denial of Service Attack Affecting MQTT. Sensors. 20. 2932. 10.3390/s20102932](https://www.researchgate.net/publication/341563324_SlowITe_a_Novel_Denial_of_Service_Attack_Affecting_MQTT). 
