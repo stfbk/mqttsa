@@ -146,7 +146,7 @@ def sniffing_attack(interface, listening_time, port):
         # Sniff for listening_time (then raise an exception) and use get_info to extract credentials
         cap.apply_on_packets(get_info, timeout=float(listening_time))
 
-    except asyncio.exceptions.TimeoutError:
+    except asyncio.TimeoutError:
         print("Sniffing terminated: "+str(num_packets)+" packets intercepted on "+interface)
         pass
     except Exception as e:
@@ -170,7 +170,7 @@ if __name__=="__main__":
     
     try:
         cap.apply_on_packets(print_info, timeout=float(args.time))
-    except asyncio.exceptions.TimeoutError:
+    except asyncio.TimeoutError:
         print("\nSniffing terminated: "+str(num_packets)+" packets intercepted on "+args.inf)
     except Exception as e:
         print(type(e))
