@@ -186,18 +186,6 @@ def fingerprinting_report(pdfw, broker_info):
                 outdated_broker = "Yes"
             else:
                 pdfw.add_to_existing_paragraph('EMQ X version is up-to-date.')
-        elif ("adafruit" in broker_info):
-            if (not brokers ["adafruit"] in broker_info):
-                pdfw.add_to_existing_paragraph('<b>[!]Adafruit IO version is not updated</b>: please refer to the last <a href="https://io.adafruit.com/blog/">Change log</a> for bugs and security issues.')
-                outdated_broker = "Yes"
-            else:
-                pdfw.add_to_existing_paragraph('Adafruit IO is up-to-date.')
-        elif ("machine_head" in broker_info):
-            if (not brokers ["machine_head"] in broker_info):
-                pdfw.add_to_existing_paragraph('<b>[!]Machine Head version is not updated</b>: please refer to the last <a href="https://github.com/clojurewerkz/machine_head/blob/master/ChangeLog.md">Change log</a> for bugs and security issues.')
-                outdated_broker = "Yes"
-            else:
-                pdfw.add_to_existing_paragraph('Machine Head is up-to-date.')
         elif ("moquette" in broker_info):
             if (not brokers ["moquette"] in broker_info):
                 pdfw.add_to_existing_paragraph('<b>[!]Moquette version is not updated</b>: please refer to the last <a href="https://github.com/andsel/moquette/blob/master/ChangeLog.txt">Change log</a> for bugs and security issues.')
@@ -206,16 +194,10 @@ def fingerprinting_report(pdfw, broker_info):
                 pdfw.add_to_existing_paragraph('Moquette is up-to-date.')
         elif ("solace" in broker_info):
             if (not brokers ["solace"] in broker_info):
-                pdfw.add_to_existing_paragraph('<b>[!]Solace PubSub+ version is not updated</b>: please refer to the last <a href="https://products.solace.com/download/PUBSUB_STAND_RN">Release notes</a> for bugs and security issues.')
+                pdfw.add_to_existing_paragraph('<b>[!]Solace PubSub+ version is not updated</b>: please refer to the last <a href="https://docs.solace.com/Release-Notes/Release-Info-appliance-sw-releases.htm">Release notes</a> for bugs and security issues.')
                 outdated_broker = "Yes"
             else:
                 pdfw.add_to_existing_paragraph('Solace PubSub+ is up-to-date.')
-        elif ("thingstream" in broker_info):
-            if (not brokers ["thingstream"] in broker_info):
-                pdfw.add_to_existing_paragraph('<b>[!]Thingstream version is not updated</b>: please refer to the last <a href="https://sites.google.com/thingstream.io/docs/release-notes">Release notes</a> for bugs and security issues.')
-                outdated_broker = "Yes"
-            else:
-                pdfw.add_to_existing_paragraph('Thingstream is up-to-date.')
         else:
             outdated_broker = "/"
             pdfw.add_to_existing_paragraph('MQTTSA was not able to detect if the broker is up-to-date. Please verify manually.')

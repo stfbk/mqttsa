@@ -102,63 +102,69 @@ def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, F_DoS, FSi
     
     html += '<h4 align="left">'+title+'</h4>'\
         '<table width="100%">'\
+        '<thead>'\
         '    <tr width="100%">'\
-        '      <th width="50%"><center>Test configuration</center></th>'\
-        '      <th width="50%"><center>Vulnerabilities</center></th>'\
+        '      <th width="25%"><center>Test configuration</center></th>'\
+        '      <th width="25%"> </th>'\
+        '      <th width="25%"><center>Vulnerabilities</center></th>'\
+        '      <th width="25%"> </th>'\
         '    </tr>'\
+        '</thead>'\
+        '<tbody>'\
         '    <tr width="100%">'\
         '      <td width="25%">Broker host and port</td>'\
         '      <td width="25%">'+ IP +':'+ Port +'</td>'\
-        '      <td width="25%">&nbsp;&nbsp;&nbsp;Outdated Broker</td>'\
+        '      <td width="25%">Outdated Broker</td>'\
         '      <td width="25%"><center>' + outdated + '</center></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Listening time</td>'\
         '        <td width="25%">' + Listening + ' seconds </td>'\
-        '        <td width="25%">&nbsp;&nbsp;&nbsp;Use of TLS</td>'\
+        '        <td width="25%">Use of TLS</td>'\
         '        <td width="25%"><center>'+ str(implements_TLS) +'*</center></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Message to send</td>'\
         '        <td width="25%">' + Msg + '</td>'\
-        '        <td width="25%">&nbsp;&nbsp;&nbsp;Information Disclosure</td>'\
+        '        <td width="25%">Information Disclosure</td>'\
         '        <td width="25%"><center>'+ disclosure +'</center></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Sniffing interface</td>'\
         '        <td width="25%">' + Interface + '</td>'\
-        '        <td width="25%">&nbsp;&nbsp;&nbsp;Accessible service</td>'\
+        '        <td width="25%">Accessible service</td>'\
         '        <td width="25%"><center>'+ str(weak_ac) +'</center></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Data/Msg tampering</td>'\
         '        <td width="25%">' + MD + '</td>'\
-        '        <td width="50%">&nbsp;&nbsp;&nbsp;or weak Access Control</td>'\
+        '        <td width="50%">or weak Access Control</td>'\
         '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Brute-forcing</td>'\
         '        <td width="25%">' + Brute + '</td>'\
-        '        <td width="25%">&nbsp;&nbsp;&nbsp;Unlimited** payload</td>'\
+        '        <td width="25%">Unlimited** payload</td>'\
         '        <td width="25%">' + payload_string + '</td>'\
         '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Flooding DoS conn.</td>'\
         '        <td width="25%">' + F_DoS + '</td>'\
-        '        <td width="25%">&nbsp;&nbsp;&nbsp;Unlimited** connections</td>'\
+        '        <td width="25%">Unlimited** connections</td>'\
         '        <td width="25%">' + connection_string + '</td>'\
         '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">- Payload size</td>'\
         '        <td width="25%">' + FSize_DoS + '</td><'\
-        '        <td width="25%">&nbsp;&nbsp;&nbsp;Unlimited** msg queues</td>'\
+        '        <td width="25%">Unlimited** msg queues</td>'\
         '        <td width="25%">' + queue_string + '</td>'\
         '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Slow DoS conn.</td>'\
         '        <td width="25%">' + S_DoS + '</td>'\
-        '        <td width="25%">&nbsp;&nbsp;&nbsp;Overall risk</td>'\
+        '        <td width="25%">Overall risk</td>'\
         '        <td width="25%"><center>'+ Rating +'</center></td>'\
         '    </tr>'\
+        '</tbody>'\
         '</table>' +"<font size="+str(font_size)+">*: False if not providing X.509 certificates or according to the broker implementation (e.g., Mosquitto). Verify with TLS Assistant (<a href=\"https://github.com/stfbk/tlsassistant\">https://github.com/stfbk/tlsassistant</a>).<br>**: With respect to provided parameters.</font><br></p><br>"
 
 # append a sub-paragraph to the HTML

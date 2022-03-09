@@ -12,6 +12,9 @@ import paho.mqtt.client as mqtt
 
 import os, ssl, sys
 
+#Set stdout to print UTF8-encoded messages
+sys.stdout.reconfigure(encoding='utf-8')
+
 # Function called after MQTTSA connects with the broker, whether the connection was successful or not
 def on_connect_3(client, userdata, flags, rc):
 
@@ -106,12 +109,7 @@ def on_message(client, userdata, message):
     global text_message
 
     # Parse the message
-    try:
-        payload = message.payload.decode("utf-8")
-    except:
-        payload = str(message.payload, 'utf-8')
-        print('message received but cannot decode as utf-8: ' + payload)
-
+    payload = message.payload.decode('utf-8','ignore')
     topic = str(message.topic)
     
     # Add the topic in the corresponding readable set
@@ -125,8 +123,8 @@ def on_message(client, userdata, message):
     else:
         if(not 'MQTTSA/Client_flooding' in topic):
             topics_readable.add(topic)
-            #if(len(payload) < 1000 and not payload.startswith('DoSMessage')): # Avoid printing on console DoS messages or long ones
-            print('Non-sys message received '+ payload)
+            if(len(payload) < 1000 and not str(payload).startswith('DoSMessage')): # Avoid printing on console DoS messages or long ones
+                print('Non-sys message received ' + payload)
 
     # This function parses the content of the message to extract useful information
     if(not 'MQTTSA/Client_flooding' in topic):

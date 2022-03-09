@@ -4,7 +4,7 @@ The goal of MQTTSA is to automatically detect misconfigurations in MQTT brokers,
 
 ## Install
 
-**MQTTSA** requires (e.g., via `apt`) the following packets: `python3-pip tshark` -- to allow the execution as non-root user, select yes when prompted. Run `make` to install the additional requirements with `pip3` (from `requirements.txt`). If necessary, add the user to the `wireshark` group via `sudo adduser $USER wireshark`.
+**MQTTSA** requires (e.g., via `apt`) the following packets: `python3-pip tshark` -- to allow the execution as non-root user, select yes when prompted. Run `make` to install the additional requirements with `pip3` (from `requirements.txt` - please remove `fpdf` if already installed). If necessary, add the user to the `wireshark` group via `sudo adduser $USER wireshark`.
 
 ## Usage
 

@@ -1,8 +1,6 @@
-mosquitto = 2.0.10
-hivemq = 4.5.3
-vernemq = 1.11.0
-emqx = 4.2.5
-machine_head = 1.0.0
-moquette = 0.12.1
-solace = 9.8.1
-thingstream = 3.3.0
+mosquitto = 2.0.14
+hivemq = 4.7.4
+vernemq = 1.12.4
+emqx = 4.4.1
+moquette = 0.15
+solace = 9.13.0

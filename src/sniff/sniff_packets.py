@@ -1,5 +1,5 @@
 import pyshark
-import concurrent.futures
+import asyncio
 import argparse
 
 # Custom class to store a username and the related password (if found)
@@ -27,7 +27,7 @@ username_set = {""}
 
 # Utility functionto print credentials
 def print_credentials(cred):
-    cid = ("Any") if (cred.clientID == None) else cred.clientID
+    cid = ("Any") if (cred.clientID == None or cred.clientID == "Client ID: ") else cred.clientID
     cusername = ("Any") if (cred.username == None) else cred.username
     cpassword = ("Any") if (cred.password == None) else cred.password
     return ("ID: "+cid+", "+ "U: "+cusername+", "+"P: "+cpassword)
@@ -146,7 +146,7 @@ def sniffing_attack(interface, listening_time, port):
         # Sniff for listening_time (then raise an exception) and use get_info to extract credentials
         cap.apply_on_packets(get_info, timeout=float(listening_time))
 
-    except concurrent.futures.TimeoutError:
+    except asyncio.exceptions.TimeoutError:
         print("Sniffing terminated: "+str(num_packets)+" packets intercepted on "+interface)
         pass
     except Exception as e:
@@ -170,12 +170,13 @@ if __name__=="__main__":
     
     try:
         cap.apply_on_packets(print_info, timeout=float(args.time))
-    except concurrent.futures.TimeoutError:
+    except asyncio.exceptions.TimeoutError:
         print("\nSniffing terminated: "+str(num_packets)+" packets intercepted on "+args.inf)
     except Exception as e:
+        print(type(e))
         template = "An exception of type {0} occurred during Sniffing. Arguments:\n{1!r}"
         message = template.format(type(e).__name__, e.args)
         print(message)
 
     for c in credential_list:
-            print("ClientID: "+c.clientID+", Username: "+c.username+", Password: "+c.password)
+            print(print_credentials(c))
