@@ -164,7 +164,6 @@ def get_avg_publish_time(host, version, port, topic, credentials, cert_key_paths
             time.sleep(1)
             
     if(timeout_timer == 10): return None
-    connected -= 1 # avoids inconsistencies with the number of connected clients
     try:
         # Set pre-publish timestamps to compare them with on_publish ones
         for x in range (100):
@@ -192,6 +191,7 @@ def get_avg_publish_time(host, version, port, topic, credentials, cert_key_paths
     # Does not raise exceptions if does not manage to connect
     client.loop_stop() 
     client.disconnect()
+    connected -= 1 # avoids inconsistencies with the number of connected clients (was incremented in on_connect callback)
  
 def flooding_dos(host, version, port, credentials, cert_key_paths, connections, payload_size, topic, wait_time):
     global connected
@@ -211,6 +211,7 @@ def flooding_dos(host, version, port, credentials, cert_key_paths, connections, 
         try:
             c = init_client(host, version, port, 60, "flooding", "Client_flooding_"+str(x), True, credentials, cert_key_paths)
             mqtt_clients.append(c)
+            #print(f"X equals {x}, connected equals {connected}")
         except OSError:
             print(f"Error while connecting Client {x} - removing a client (to allow\n\
                   the one that get avg publishing time) and exiting the for loop")
@@ -239,6 +240,7 @@ def flooding_dos(host, version, port, credentials, cert_key_paths, connections, 
     
     print(f"Starting flooding-based DoS publishing with {len(mqtt_clients)} clients - {payload_size} MB")
     for client in mqtt_clients:
+        #print(f"{client._client_id} publishing")
         client.publish(topic+"/"+client._client_id.decode(),payload,0,True) #Set retain to True to possibly affect also I/O
 
     #Send 100 messages and store the time between sending a QoS 1 message and receiving the acknowledgment
@@ -257,7 +259,7 @@ def flooding_dos(host, version, port, credentials, cert_key_paths, connections, 
         print("Flooding DoS - post-sending time: " + str(round(post_test_measures))+"ms")
         print("Flooding DoS - Time_increment: " + str(round(percentage_increment))+"%")
 
-    connection_difference = (connections-connected+1) #The one we pop-out
+    connection_difference = (connections-connected) #The one we pop-out
     
     #If not all clients managed to connect or there is an increment in publish time of more than 100% DoS is succesfull
     if (connection_difference != 0 or percentage_increment > 100):
