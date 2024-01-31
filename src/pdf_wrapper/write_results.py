@@ -13,7 +13,7 @@ def authentication_report(pdfw, no_authentication, broker_info, credentials_snif
 
     # No authentication mechanism detected -> write mitigations
     if (no_authentication):
-        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA did not detect any authentication mechanism<b>")
+        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA did not detect any authentication mechanism</b>")
 
         # Suggest X.509 certificates 
         pdfw.add_to_existing_paragraph('The tool was able to connect to the broker without specifying any kind of credential information. This may cause remote attackers to successfully connect to the broker. It is strongly advised to support authentication via X.509 client certificates.')
@@ -77,9 +77,9 @@ def authentication_report(pdfw, no_authentication, broker_info, credentials_snif
         if (interface == None):
             pdfw.add_to_existing_paragraph('Try to listen on a network interface to assess the possibility to sniff credentials.')
         if (credentials_sniffed==True):
-            pdfw.add_to_existing_paragraph('<b>[!] The tool was able to intercept and use valid client credentials: refer to the Sniffing section for additional details.<b>')
+            pdfw.add_to_existing_paragraph('<b>[!] The tool was able to intercept and use valid client credentials: refer to the Sniffing section for additional details.</b>')
         if (credentials_bruteforced==True):
-            pdfw.add_to_existing_paragraph('<b>[!] The tool was able to bruteforce and use valid client credentials: refer to the Brute force section for additional details.<b>')
+            pdfw.add_to_existing_paragraph('<b>[!] The tool was able to bruteforce and use valid client credentials: refer to the Brute force section for additional details.</b>')
             
 # Information disclosure section
 def information_disclosure_report(pdfw, topics_readable, sys_topics_readable, listening_time, broker_info, no_authentication):
@@ -215,7 +215,7 @@ def sniffing_report(pdfw, interface, cred_string, listening_time, broker_info):
     if(not cred_string):
         pdfw.add_to_existing_paragraph("MQTTSA was not able to intercept any credential information.") 
     else:
-        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA was able to intercept the following credentials.<b>")
+        pdfw.add_to_existing_paragraph("<b>[!] MQTTSA was able to intercept the following credentials.</b>")
         
         for s in cred_string:
             pdfw.add_to_existing_paragraph(s+"<br>")
@@ -276,13 +276,13 @@ def dos_report(pdfw, dos_flooding_connections, dos_flooding_size, connection_dif
     if(dos_flooding_connections != None):
         pdfw.add_to_existing_paragraph("MQTTSA tried to limit the availability of the service by issuing clients connection and incrementing the processing time: it attempted connecting with "+str(dos_flooding_connections)+" clients, each publishing a "+ str(dos_flooding_size) +"MB QoS 0 message.") 
     
-        pdfw.add_to_existing_paragraph("<b>[!]"+((str(connection_difference)+" clients were not able") if (connection_difference > 0) else ("All clients were able")) + " to connect; "+ str(int(percentage_increment)) +"% is the overhead on publishing time caused by the heavy test messages.<b>")
+        pdfw.add_to_existing_paragraph("<b>[!]"+((str(connection_difference)+" clients were not able") if (connection_difference > 0) else ("All clients were able")) + " to connect; "+ str(int(percentage_increment)) +"% is the overhead on publishing time caused by the heavy test messages.</b>")
     
     # Report if slow DoS has been performed
     if(dos_slow_connections != None):
         pdfw.add_to_existing_paragraph("MQTTSA tried to saturate the number of connections on the broker or the remote endpoint by connecting "+ str(dos_slow_connections)+ " clients.")
        
-        pdfw.add_to_existing_paragraph(("<b>[!]"+(str(slow_connection_difference)+" clients were not able") if (slow_connection_difference > 0) else ("All clients were able")) + " to connect.<b>")
+        pdfw.add_to_existing_paragraph(("<b>[!]"+(str(slow_connection_difference)+" clients were not able") if (slow_connection_difference > 0) else ("All clients were able")) + " to connect.</b>")
         
             
     pdfw.add_to_existing_paragraph("<br>The tool is not currently able to determine if an existing client was disconnected: the user should check the other clients or the logfile of the broker for any reconnection attempts. In case the test did not result in disconnections or delays, the test can be performed again increasing the number of flooding-based and slow DoS connections.")

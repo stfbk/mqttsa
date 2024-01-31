@@ -199,7 +199,7 @@ def flooding_dos(host, version, port, credentials, cert_key_paths, connections, 
     global percentage_increment
     global publish_times
     connected = 0 # reset the connected counter
-    mqtt_clients = [] #An array containing all clients for publishing
+    mqtt_clients: list[mqtt.Client] = [] #An array containing all clients for publishing
         
     #Send 100 messages and store the time between sending a QoS 1 message and receiving the acknowledgment
     get_avg_publish_time(host, version, port, topic, credentials, cert_key_paths)
@@ -208,27 +208,36 @@ def flooding_dos(host, version, port, credentials, cert_key_paths, connections, 
     
     #Init and connect all clients - no on_publish
     for x in range(connections):
-        mqtt_clients.append(init_client(host, version, port, 60, "flooding", "Client_flooding_"+str(x), True, credentials, cert_key_paths))
+        try:
+            c = init_client(host, version, port, 60, "flooding", "Client_flooding_"+str(x), True, credentials, cert_key_paths)
+            mqtt_clients.append(c)
+        except OSError:
+            print(f"Error while connecting Client {x} - removing a client (to allow\n\
+                  the one that get avg publishing time) and exiting the for loop")
+            c = mqtt_clients.pop().disconnect()
+            break
     
     #Wait for all clients connections or X seconds timeout
     try:
         print(str(wait_time) + " seconds timeout for flooding-based DoS (press ctrl+c once to skip):")
         for x in range (wait_time):
-            if(int(connections)-connected == 0):
+            if(connections-connected == 0):
                 print("All flooding DoS clients connected")
-                break;
+                break
             else:
                 if (x % 10 == 0):
                     print(str(wait_time-x) + " seconds remaining") # print each 10s
-                    print(f"Connected: {connected}, Connection: {connections}")
+                    print(f"Connected {connected} upon {connections}")
                 time.sleep(1)
     except KeyboardInterrupt:
         pass
-    
+    except OSError:
+        pass
+
     #payload_size (MB)
     payload = "0" * 1024 * 512 * payload_size
     
-    print("Starting flooding-based DoS publishing - "+ str(payload_size) +" MB")
+    print(f"Starting flooding-based DoS publishing with {len(mqtt_clients)} clients - {payload_size} MB")
     for client in mqtt_clients:
         client.publish(topic+"/"+client._client_id.decode(),payload,0,True) #Set retain to True to possibly affect also I/O
 
@@ -248,7 +257,7 @@ def flooding_dos(host, version, port, credentials, cert_key_paths, connections, 
         print("Flooding DoS - post-sending time: " + str(round(post_test_measures))+"ms")
         print("Flooding DoS - Time_increment: " + str(round(percentage_increment))+"%")
 
-    connection_difference = (connections-connected)
+    connection_difference = (connections-connected+1) #The one we pop-out
     
     #If not all clients managed to connect or there is an increment in publish time of more than 100% DoS is succesfull
     if (connection_difference != 0 or percentage_increment > 100):
@@ -451,7 +460,7 @@ def broker_dos(host, version, port, credentials, connections, payload_size, slow
         print ("DoS client credentials:\n - ID: " + credentials.clientID + " U: "+ credentials.username + " P: "+ credentials.password)
 
     if(connections!=None):
-        res1 = flooding_dos(host, version, port, credentials, cert_key_paths, connections, payload_size, topic, 60)
+        res1 = flooding_dos(host, version, port, credentials, cert_key_paths, connections, payload_size, topic, 10)
         
     if(slow_connections!=None):
         #For the TTL/wait time, we consider 3k connections each minute as reference (and double the time); at least 60s

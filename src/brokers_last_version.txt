@@ -1,6 +1,6 @@
-mosquitto = 2.0.14
-hivemq = 4.7.4
-vernemq = 1.12.4
-emqx = 4.4.1
-moquette = 0.15
-solace = 9.13.0
+mosquitto = 2.0.18
+hivemq = 4.24
+vernemq = 1.13.0
+emqx = 5.3.1
+moquette = 0.16
+solace = 10.7.0

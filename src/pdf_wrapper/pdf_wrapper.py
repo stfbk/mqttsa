@@ -31,7 +31,7 @@ def add_paragraph(title, msg=None):
     if check == False:
         init()
     if msg != None:
-        html += '<h2 align="left">'+title+"</h2><font size="+str(font_size)+">"+msg+'</p><br>'
+        html += '<h2 align="left">'+title+"</h2><font size="+str(font_size)+">"+msg+'</font><br>'
     else:
         html += '<h2 align="left">'+title+'</h2>'
        
@@ -104,75 +104,75 @@ def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, F_DoS, FSi
         '<table width="100%">'\
         '<thead>'\
         '    <tr width="100%">'\
-        '      <th width="25%"><center>Test configuration</center></th>'\
-        '      <th width="25%"> </th>'\
-        '      <th width="25%"><center>Vulnerabilities</center></th>'\
-        '      <th width="25%"> </th>'\
+        '      <th><center>Test configuration</center></th>'\
+        '      <th> </th>'\
+        '      <th><center>Vulnerabilities</center></th>'\
+        '      <th> </th>'\
         '    </tr>'\
         '</thead>'\
         '<tbody>'\
         '    <tr width="100%">'\
-        '      <td width="25%">Broker host and port</td>'\
-        '      <td width="25%">'+ IP +':'+ Port +'</td>'\
-        '      <td width="25%">Outdated Broker</td>'\
-        '      <td width="25%"><center>' + outdated + '</center></td>'\
+        '      <td>Broker host and port</td>'\
+        '      <td>'+ IP +':'+ Port +'</td>'\
+        '      <td>Outdated Broker</td>'\
+        '      <td><center>' + outdated + '</center></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">Listening time</td>'\
-        '        <td width="25%">' + Listening + ' seconds </td>'\
-        '        <td width="25%">Use of TLS</td>'\
-        '        <td width="25%"><center>'+ str(implements_TLS) +'*</center></td>'\
+        '        <td>Listening time</td>'\
+        '        <td>' + Listening + ' seconds </td>'\
+        '        <td>Use of TLS</td>'\
+        '        <td><center>'+ str(implements_TLS) +'*</center></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">Message to send</td>'\
-        '        <td width="25%">' + Msg + '</td>'\
-        '        <td width="25%">Information Disclosure</td>'\
-        '        <td width="25%"><center>'+ disclosure +'</center></td>'\
+        '        <td>Message to send</td>'\
+        '        <td>' + Msg + '</td>'\
+        '        <td>Information Disclosure</td>'\
+        '        <td><center>'+ disclosure +'</center></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">Sniffing interface</td>'\
-        '        <td width="25%">' + Interface + '</td>'\
-        '        <td width="25%">Accessible service</td>'\
-        '        <td width="25%"><center>'+ str(weak_ac) +'</center></td>'\
+        '        <td>Sniffing interface</td>'\
+        '        <td>' + Interface + '</td>'\
+        '        <td>Accessible service</td>'\
+        '        <td><center>'+ str(weak_ac) +'</center></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">Data/Msg tampering</td>'\
-        '        <td width="25%">' + MD + '</td>'\
-        '        <td width="25%">or weak Access Control</td>'\
-        '        <td width="25%"></td>'\
+        '        <td>Data/Msg tampering</td>'\
+        '        <td>' + MD + '</td>'\
+        '        <td>or weak Access Control</td>'\
+        '        <td></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">Brute-forcing</td>'\
-        '        <td width="25%">' + Brute + '</td>'\
-        '        <td width="25%">Unlimited** payload</td>'\
-        '        <td width="25%">' + payload_string + '</td>'\
+        '        <td>Brute-forcing</td>'\
+        '        <td>' + Brute + '</td>'\
+        '        <td>Unlimited** payload</td>'\
+        '        <td>' + payload_string + '</td>'\
         '    </tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">Flooding DoS conn.</td>'\
-        '        <td width="25%">' + F_DoS + '</td>'\
-        '        <td width="25%">Unlimited** connections</td>'\
-        '        <td width="25%">' + connection_string + '</td>'\
+        '        <td>Flooding DoS conn.</td>'\
+        '        <td>' + F_DoS + '</td>'\
+        '        <td>Unlimited** connections</td>'\
+        '        <td>' + connection_string + '</td>'\
         '    </tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">- Payload size</td>'\
-        '        <td width="25%">' + FSize_DoS + '</td><'\
-        '        <td width="25%">Unlimited** msg queues</td>'\
-        '        <td width="25%">' + queue_string + '</td>'\
+        '        <td>- Payload size</td>'\
+        '        <td>' + FSize_DoS + '</td><'\
+        '        <td>Unlimited** msg queues</td>'\
+        '        <td>' + queue_string + '</td>'\
         '    </tr>'\
         '    <tr width="100%">'\
-        '        <td width="25%">Slow DoS conn.</td>'\
-        '        <td width="25%">' + S_DoS + '</td>'\
-        '        <td width="25%">Overall risk</td>'\
-        '        <td width="25%"><center>'+ Rating +'</center></td>'\
+        '        <td>Slow DoS conn.</td>'\
+        '        <td>' + S_DoS + '</td>'\
+        '        <td>Overall risk</td>'\
+        '        <td><center>'+ Rating +'</center></td>'\
         '    </tr>'\
         '</tbody>'\
-        '</table>' +"<font size="+str(font_size)+">*: False if not providing X.509 certificates or according to the broker implementation (e.g., Mosquitto). Verify with TLS Assistant (<a href=\"https://github.com/stfbk/tlsassistant\">https://github.com/stfbk/tlsassistant</a>).<br>**: With respect to provided parameters.</font><br></p><br>"
+        '</table>' +"<font size="+str(font_size)+">*: False if not providing X.509 certificates or according to the broker implementation (e.g., Mosquitto). Verify with TLS Assistant (<a href=\"https://github.com/stfbk/tlsassistant\">https://github.com/stfbk/tlsassistant</a>).<br>**: With respect to provided parameters.</font><br><br>"
 
 # append a sub-paragraph to the HTML
 def add_sub_paragraph(title, msg=None):
     global html
     if msg != None:
-        html += '<h4 align="left">'+title+"</h4><font size="+str(font_size)+">"+msg+'</p><br>'
+        html += '<h4 align="left">'+title+"</h4><font size="+str(font_size)+">"+msg+'</font><br>'
     else:
         html += '<h4 align="left">'+title+'</h4>'
 
