@@ -138,7 +138,8 @@ def add_summary_table(title, IP, Port, Listening, Msg, Interface, MD, F_DoS, FSi
         '    <tr width="100%">'\
         '        <td width="25%">Data/Msg tampering</td>'\
         '        <td width="25%">' + MD + '</td>'\
-        '        <td width="50%">or weak Access Control</td>'\
+        '        <td width="25%">or weak Access Control</td>'\
+        '        <td width="25%"></td>'\
         '    </tr>'\
         '    <tr width="100%">'\
         '        <td width="25%">Brute-forcing</td>'\
