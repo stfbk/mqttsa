@@ -41,5 +41,7 @@ def create_parser():
     parser.add_argument('--md', dest='malformed_data', action='store_true', help='Add flag --md to perform the malformed data test')
 
     parser.add_argument('--ni', dest='non_intrusive', action='store_true', help='Add flag --ni to perform only non intrusive tests')
+
+    parser.add_argument('-mup', dest = 'max_user_properties', type=int, default=100000, help='Specify the max number of user properties to include in a message for User Properties Test (defaults to 100000 - multiples of 10)')
     
     return parser

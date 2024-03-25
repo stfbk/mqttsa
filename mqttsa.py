@@ -382,6 +382,7 @@ if __name__== "__main__":
     ca_cert                   = args.ca_cert
     client_cert               = args.client_cert
     client_key                = args.client_key
+    max_user_properties       = args.max_user_properties
     
     print('')
     
@@ -408,7 +409,7 @@ if __name__== "__main__":
         do_bruteforce = False
     else:
         if(wordlist_path == None):
-            wordlist_path = os.getcwd() + "\src\words.txt" #Use the one provided
+            wordlist_path = os.path.join(os.getcwd(), "src", "words.txt") #Use the one provided
             print('[!] "w" parameters not specified, using the default one')
             
         if(os.path.exists(wordlist_path)):
@@ -439,6 +440,10 @@ if __name__== "__main__":
     if(client_key != None and not os.path.exists(client_key)):
         print('[!] Error: verify the Client key path')
         sys.exit()
+
+    if max_user_properties == None or max_user_properties < 1:
+        print('[!] "max_user_properties" parameter < 0 or null, no user properties test')
+        max_user_properties = None
 
     if (malformed_data == False):
         print('[!] --md flag not specified, no Malformed-data attack')
@@ -522,6 +527,9 @@ if __name__== "__main__":
                 
             print('\nPerforming malformed data on '+ mal_data_topic +' topic...\n')
             mal_data = md.malformed_data(broker_address, version, port, mal_data_topic, ca_cert, client_cert, client_key, credential_list)
+            
+            if(version == '5'):
+                malformed_result_5 = md.malformed_data_5(broker_address, port, ca_cert, client_cert, client_key, credential_list)
         else:
             print("Skipping malformed-data test as the tool was not able to connect")
                  
@@ -555,6 +563,10 @@ if __name__== "__main__":
                                             max_payload,
                                             "MQTTSA",
                                             [ca_cert, client_cert, client_key])
+            if(version == '5'):
+                dos_result_5 = dos.broker_dos_5(broker_address, port, max_user_properties,
+                                                credential_list[0] if(credential_list) else sniff.Credentials(), 
+                                                [ca_cert, client_cert, client_key])
         else:
             print("Skipping DoS test as the tool was not able to connect")
         
@@ -620,9 +632,20 @@ if __name__== "__main__":
                 max_payload, dos.max_payload,
                 broker_info)
 
+            if(version == '5' and dos_result_5 != None):
+                max_pack_size_result = dos_result_5[0]
+                us_prop_result = dos_result_5[1]
+                will_delay_result = dos_result_5[2]
+                write_results.dos_report_5(pdfw, max_pack_size_result, us_prop_result, dos.max_user_properties, will_delay_result)
+
         # malformed data results
         if (mal_data):
             write_results.malformed_data_report(pdfw, mal_data, mal_data_topic)
+            if(version == '5'):
+                double_result = malformed_result_5[0]
+                wrong_result = malformed_result_5[1]
+                share_result = malformed_result_5[2]
+                write_results.malformed_data_report_5(pdfw, double_result, wrong_result, share_result)
     else:
         pdfw.add_sub_paragraph("Error", "Unable to connect to the broker. Please verify host/port.")
     # function that generates the pdf report
