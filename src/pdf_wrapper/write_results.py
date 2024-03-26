@@ -145,7 +145,7 @@ def tampering_data_report(pdfw, topics_writable, sys_topics_writable, topics_rea
 
     # MQTTSA did not found readable topics -> try to repeat the assessment increasing the listening_time parameter
     else:
-        pdfw.add_to_existing_paragraph("Since MQTTSA was not able to intercept any topic, this vulnerability was not tested.<br>Try to perform the assessment again, increasing the 'listening_time' parameter.</b>")
+        pdfw.add_to_existing_paragraph("<b>Since MQTTSA was not able to intercept any topic, this vulnerability was not tested.<br>Try to perform the assessment again, increasing the 'listening_time' parameter.</b>")
     
 # Broker fingerprinting section
 def fingerprinting_report(pdfw, broker_info):
@@ -329,6 +329,30 @@ def dos_report(pdfw, dos_flooding_connections, dos_flooding_size, connection_dif
     pdfw.add_to_existing_paragraph('<a href="https://www.hivemq.com/blog/mqtt-security-fundamentals-securing-mqtt-systems">MQTT Security Fundamentals: Securing MQTT Systems</a>')
 
 
+def dos_report_5(pdfw, max_pack_size_result, us_prop_result, max_user_properties, will_delay_result):
+    # MQTT 5 Tests
+    pdfw.add_sub_paragraph("<br><b>MQTT v5 Properties DoS Tests</b>")
+    pdfw.add_to_existing_paragraph("1) Maximum Packet Size Test<br> The test aims to verify if the brokers implement proper packet length checks")
+    if(max_pack_size_result):
+        pdfw.add_to_existing_paragraph("<br> <b>Test not passed: the broker forwarded a packet of size greater than the <i>maximum packet size</i> value set</b>")
+    else:
+        pdfw.add_to_existing_paragraph("<br> <b>Test passed: the broker complied with a <i>maximum packet size</i> value set</b>")
+
+    pdfw.add_to_existing_paragraph("<br>2) User Properties Test (<a href=https://nvd.nist.gov/vuln/detail/CVE-2021-41039>CVE-2021-41039</a>) <br> The test consists of a client that tries to connect using a large number of <i>user properties</i>; it may cause excessive CPU usage on the broker or exception raising")
+    if(us_prop_result):
+        pdfw.add_to_existing_paragraph("<br> <b>Test passed: the broker did not crash</b>")
+    else:
+        pdfw.add_to_existing_paragraph("<br> <b>Test not passed: the broker did not acknowledge all the packets. The broker may disconnect the client or may be crashed: see broker log for details </b>")
+    if(max_user_properties != None):
+        pdfw.add_to_existing_paragraph("<br> Maximum <i>user properties</i> acknowledged by the broker = "+str(max_user_properties))
+    
+    pdfw.add_to_existing_paragraph("<br>3) Will Delay Interval Test (<a href=https://nvd.nist.gov/vuln/detail/CVE-2019-11778>CVE-2019-11778</a>) <br> The test involves a client connecting to the broker with a <i>will delay interval</i> greater than the <i>session expiry interval</i>; the vulnerability may cause the broker's system to crash")
+    if(will_delay_result):
+        pdfw.add_to_existing_paragraph("<br> <b>Test passed: the broker sent will message at session expirying</b>")
+    else:
+        pdfw.add_to_existing_paragraph("<br> <b>Test not passed: the broker did not send will message at session expirying; check MQTTSA log for details</b>")
+
+
 # Malformed data section
 def malformed_data_report(pdfw, mal_data, topic):
     pdfw.add_paragraph("Malformed data")
@@ -352,3 +376,59 @@ def malformed_data_report(pdfw, mal_data, topic):
         pdfw.add_to_existing_paragraph("<br>"+error_values)
 
     pdfw.add_to_existing_paragraph("In case the report refer to values like '$' or '$topic', it might be possible to be exploit a bug included in an old version of Mosquitto. We strongly suggest to always keep the broker updated to avoid similar issues.")
+
+def malformed_data_report_5(pdfw, double_result, wrong_result, share_result):
+    # MQTT 5 Tests
+    
+    pdfw.add_sub_paragraph("<br><b>Duplicate Properties Test</b>")
+    pdfw.add_to_existing_paragraph("Setting a property value more than once is a protocol error for most of the properties with the exception of <it>user properties</it> and <it>subscription identifier</it>. Including duplicate properties cause ambiguities and may provoke issues <br>")
+    double_string = ""
+    true = "the broker acknowledged the packet; double property ignored"
+    false = "the broker did not acknowledge the packet; protocol error/malformed packet reported"
+    counter = 0
+    for property in double_result:
+        double_string += "<b>" + str(property) + "</b>: "
+        if(double_result[property]):
+            counter+=1
+            double_string += true + "<br>"
+        else:
+            double_string += false + "<br>"
+    pdfw.add_to_existing_paragraph(double_string)    
+    if(counter != 0):
+        pdfw.add_to_existing_paragraph("The broker <b>ignored</b> some duplicate properties!")
+
+    pdfw.add_sub_paragraph("<br><b>Wrong Properties Test</b>")
+    pdfw.add_to_existing_paragraph("It is not a good practice setting properties in a packet where they are not expected. Normally, the broker should disconnect the client when a protocol error happens This last test uses a client to include the properties in the wrong packet <br>")
+    wrong_string = ""
+    true = "the broker acknowledged the packet; wrong property ignored"
+    false = "the broker did not acknowledge the packet; protocol error/malformed packet reported"
+    counter = 0
+    for property in wrong_result:
+        wrong_string += "<b>" + str(property) + "</b>: "
+        if(wrong_result[property]):
+            counter+=1
+            wrong_string += true + "<br>"
+        else:
+            wrong_string += false + "<br>"
+    pdfw.add_to_existing_paragraph(wrong_string)    
+    if(counter != 0):
+        pdfw.add_to_existing_paragraph("The broker <b>ignored</b> some properties in the wrong packet!")
+    
+    pdfw.add_sub_paragraph("<br><b>Shared Subscription Test</b>")
+    pdfw.add_to_existing_paragraph("The test aims to try improper share topic subscriptions in order to verify the broker's behavior <br>")
+    successful_values = "<b>Topics with a positive SUBACK: </b><br>"
+    error_values = "<b>Topics with a negative SUBACK or broker disconnection: </b><br>"
+    start = len(successful_values)    
+    for topic in share_result:
+        if(share_result[topic]):
+            successful_values += str(topic) + ", "
+        else: 
+            error_values += str(topic) + ", "
+    end = len(successful_values)
+    successful_values = successful_values[:-2]
+    pdfw.add_to_existing_paragraph(successful_values)
+    error_values = error_values[:-2]
+    pdfw.add_to_existing_paragraph("<br>"+error_values)
+
+    if(start != end):
+        pdfw.add_to_existing_paragraph("<br> A shared subscription's topic filter should start with <it>$share/</it> and should contain a proper <it>ShareName</it>. See <a href=https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901250>MQTT v5 Documentation</a> for more details")
