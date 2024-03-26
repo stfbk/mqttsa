@@ -10,7 +10,7 @@ def create_parser():
     
     parser.add_argument('-p', dest='port', type=int, help='Specify the port (defaults to 1883)')
     
-    parser.add_argument('-v', dest='version', type=str, default = '3.1.1', help='Specify the protocol version (3.1.1 by default)')
+    parser.add_argument('-v', dest='version', type=str, default = '5', help='Specify the protocol version (5 by default)')
     
     parser.add_argument('-t', dest='listening_time', type=int, help='Specify the amount of seconds the tool should intercept messages on wildcard topics (defaults to 60)')
 
@@ -42,6 +42,6 @@ def create_parser():
 
     parser.add_argument('--ni', dest='non_intrusive', action='store_true', help='Add flag --ni to perform only non intrusive tests')
 
-    parser.add_argument('-mup', dest = 'max_user_properties', type=int, default=100000, help='Specify the max number of user properties to include in a message for User Properties Test (defaults to 100000 - multiples of 10)')
+    parser.add_argument('-mup', dest = 'max_user_properties', type=int, help='Specify the max number of user properties to include in a message for User Properties Test (100000 suggested - multiples of 10)')
     
     return parser

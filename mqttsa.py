@@ -534,7 +534,7 @@ if __name__== "__main__":
             print("Skipping malformed-data test as the tool was not able to connect")
                  
     # Perform the attack if flooding-based or slow DoS connections have been provided; or if investigating the max message queue/payload
-    if (dos_flooding_connections!=None or dos_slow_connections!=None or max_queue != None or max_payload != None):
+    if (dos_flooding_connections!=None or dos_slow_connections!=None or max_queue != None or max_payload != None or max_user_properties != None):
         if (connected):
             print('\nPerforming Denial of Service...\n')
             # If there is a topic in which we can write we use that topic; if no credentials, pass an empty set
